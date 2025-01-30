@@ -1,32 +1,18 @@
 use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let root = BitMapBackend::new("plotters-doc-data/0.png", (640, 480)).into_drawing_area();
-    let root = SVGBackend::new("plot_example.svg", (640, 480)).into_drawing_area();
-    // root.fill(&WHITE)?;
+    let root = SVGBackend::new("plot_example.svg", (1800, 1800)).into_drawing_area();
 
     let mut chart = ChartBuilder::on(&root)
-        // .caption("y=x^2", ("sans-serif", 50).into_font())
         .margin(5)
-        // .x_label_area_size(30)
-        // .y_label_area_size(30)
-        .build_cartesian_2d(-1f32..1f32, -0.1f32..1f32)?;
+        .build_cartesian_2d(-1f32..1f32, -1f32..1f32)?;
 
-    // chart.configure_axes().draw()?;
-    // chart.configure_mesh().draw()?;
+    let f = |x| f32::abs(f32::sin(x * 10.0) * f32::cos(x * 20.0));
 
     chart.draw_series(LineSeries::new(
-        (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
+        (-1000..=1000).map(|x| x as f32 / 1000.0).map(|x| (x, f(x))),
         &GREEN,
     ))?;
-    // .label("y = x^2")
-    // .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
-
-    // chart
-    //     .configure_series_labels()
-    //     .background_style(WHITE.mix(0.8))
-    //     .border_style(BLACK)
-    //     .draw()?;
 
     root.present()?;
 
