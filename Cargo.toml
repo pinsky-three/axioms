@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+g-code = "0.5.1"
 num = "0.4.3"
 plotters = "0.3.7"
+roxmltree = "0.19.0"
+svg2gcode = "0.3.3"
+svgtypes = "0.13.0"
