@@ -1,12 +1,56 @@
 use g_code::emit::{format_gcode_fmt, FormatOptions};
+use num::complex::{Complex64, ComplexFloat};
 use plotters::prelude::*;
+use std::iter;
 
 fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
-    let f = |x| f32::abs(f32::sin(x * 21.0) * f32::cos(x * 20.0));
+    let f = |x: Complex64| Complex64::abs(Complex64::sin(x * 21.0) * Complex64::cos(x * 20.0));
 
-    (-1000..=1000)
-        .map(|x| x as f32 / 1000.0)
-        .map(move |x| (x, f(x)))
+    // (-1000..=1000)
+    //     .map(|x| x as f32 / 1000.0)
+    //     .map(move |x| (x, f(x)))
+
+    let start_range = Complex64::new(-1.0, -1.0);
+    let end_range = Complex64::new(1.0, 1.0);
+
+    let step = 0.01;
+
+    let re_range = start_range.re..end_range.re;
+    let im_range = start_range.im..end_range.im;
+
+    // let re_steps = ((re_range.end - re_range.start) / step).ceil() as usize;
+    // let im_steps = ((im_range.end - im_range.start) / step).ceil() as usize;
+
+    let re_values = iter::successors(Some(re_range.start), move |x| {
+        let step = step;
+        let re_end = re_range.end;
+
+        if *x + step < re_end {
+            Some(*x + step)
+        } else {
+            None
+        }
+    });
+
+    let im_values = iter::successors(Some(im_range.start), move |x| {
+        let step = step;
+        let im_end = im_range.end;
+
+        if *x + step < im_end {
+            Some(*x + step)
+        } else {
+            None
+        }
+    });
+
+    let vals = re_values.flat_map(move |re| {
+        im_values.clone().map(move |im| {
+            Complex64::new(re, im)
+            // (z.re as f32, z.im as f32, f(z).re as f32)
+        })
+    });
+
+    vals.map(|z| (z.re as f32, z.im as f32))
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
