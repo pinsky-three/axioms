@@ -4,22 +4,15 @@ use plotters::prelude::*;
 use std::iter;
 
 fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
-    let f = |x: Complex64| x * x + 1.;
-
-    // (-1000..=1000)
-    //     .map(|x| x as f32 / 1000.0)
-    //     .map(move |x| (x, f(x)))
+    let f = |x: Complex64| (x.sqrt() + 1.).tan();
 
     let start_range = Complex64::new(-1.0, -1.0);
     let end_range = Complex64::new(1.0, 1.0);
 
-    let step = 0.075;
+    let step = 0.08;
 
     let re_range = start_range.re..end_range.re;
     let im_range = start_range.im..end_range.im;
-
-    // let re_steps = ((re_range.end - re_range.start) / step).ceil() as usize;
-    // let im_steps = ((im_range.end - im_range.start) / step).ceil() as usize;
 
     let re_values = iter::successors(Some(re_range.start), move |x| {
         let step = step;
@@ -60,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut chart = ChartBuilder::on(&root)
         .margin(5)
-        .build_cartesian_2d(-1f32..1f32, -1f32..1f32)?;
+        .build_cartesian_2d(-2f32..2f32, -2f32..2f32)?;
 
     // let f = |x| f32::abs(f32::sin(x * 10.0) * f32::cos(x * 20.0));
 
