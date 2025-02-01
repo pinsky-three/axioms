@@ -4,7 +4,7 @@ use plotters::prelude::*;
 use std::iter;
 
 fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
-    let f = |x: Complex64| (x.sqrt() + 1.).tan();
+    let f = |x: Complex64| x * 2.;
 
     let start_range = Complex64::new(-1.0, -1.0);
     let end_range = Complex64::new(1.0, 1.0);
@@ -76,11 +76,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 100.0,
+                    number: 200.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 100.0,
+                    number: 200.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
