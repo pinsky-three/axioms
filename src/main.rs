@@ -1,6 +1,14 @@
 use g_code::emit::{format_gcode_fmt, FormatOptions};
 use plotters::prelude::*;
 
+fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
+    let f = |x| f32::abs(f32::sin(x * 21.0) * f32::cos(x * 20.0));
+
+    (-1000..=1000)
+        .map(|x| x as f32 / 1000.0)
+        .map(move |x| (x, f(x)))
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root_path = "plot_example.svg";
 
@@ -10,12 +18,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .margin(5)
         .build_cartesian_2d(-1f32..1f32, -1f32..1f32)?;
 
-    let f = |x| f32::abs(f32::sin(x * 10.0) * f32::cos(x * 20.0));
+    // let f = |x| f32::abs(f32::sin(x * 10.0) * f32::cos(x * 20.0));
 
-    chart.draw_series(LineSeries::new(
-        (-1000..=1000).map(|x| x as f32 / 1000.0).map(|x| (x, f(x))),
-        &GREEN,
-    ))?;
+    let points = calculate_points();
+
+    chart.draw_series(LineSeries::new(points, &GREEN))?;
 
     root.present()?;
 
