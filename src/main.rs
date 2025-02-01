@@ -69,18 +69,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &roxmltree::Document::parse(String::from_utf8(svg_data).unwrap().as_str()).unwrap(),
         &svg2gcode::ConversionConfig {
             dpi: 100.0,
-            feedrate: 300.0,
-            origin: [Some(52.0), Some(36.0)],
+            feedrate: 500.0,
+            origin: [Some(48.0), Some(36.0)],
             tolerance: 0.005,
         },
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 200.0,
+                    number: 180.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 200.0,
+                    number: 180.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             None,
             None,
-            Some(g_code::parse::snippet_parser("G28 G1 Z10 G1 X42 Y30 Z1 G1 Z0").unwrap()),
+            Some(g_code::parse::snippet_parser("G28 G1 Z10 G1 X43 Y31 Z1 G1 Z0").unwrap()),
             Some(g_code::parse::snippet_parser("G1 Z30").unwrap()),
         ),
     );
