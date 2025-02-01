@@ -1,10 +1,10 @@
 use g_code::emit::{format_gcode_fmt, FormatOptions};
-use num::complex::{Complex64, ComplexFloat};
+use num::complex::Complex64;
 use plotters::prelude::*;
 use std::iter;
 
 fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
-    let f = |x: Complex64| Complex64::abs(Complex64::sin(x * 21.0) * Complex64::cos(x * 20.0));
+    let f = |x: Complex64| x * x + 1.;
 
     // (-1000..=1000)
     //     .map(|x| x as f32 / 1000.0)
@@ -13,7 +13,7 @@ fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
     let start_range = Complex64::new(-1.0, -1.0);
     let end_range = Complex64::new(1.0, 1.0);
 
-    let step = 0.01;
+    let step = 0.075;
 
     let re_range = start_range.re..end_range.re;
     let im_range = start_range.im..end_range.im;
@@ -43,14 +43,14 @@ fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
         }
     });
 
-    let vals = re_values.flat_map(move |re| {
+    let complex_plane = re_values.flat_map(move |re| {
         im_values.clone().map(move |im| {
             Complex64::new(re, im)
             // (z.re as f32, z.im as f32, f(z).re as f32)
         })
     });
 
-    vals.map(|z| (z.re as f32, z.im as f32))
+    complex_plane.map(f).map(|z| (z.re as f32, z.im as f32))
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
