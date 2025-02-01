@@ -1,4 +1,4 @@
-use g_code::emit::{format_gcode_fmt, FormatOptions, Token};
+use g_code::emit::{format_gcode_fmt, FormatOptions};
 use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
