@@ -1,15 +1,14 @@
+use axioms::black_hole_transformation;
 use g_code::emit::{format_gcode_fmt, FormatOptions};
 use num::complex::Complex64;
 use plotters::prelude::*;
 use std::iter;
 
-fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
-    let f = |x: Complex64| x * 2.;
+fn generate_grid() -> impl Iterator<Item = Complex64> {
+    let start_range = Complex64::new(-20.0, -20.0);
+    let end_range = Complex64::new(20.0, 20.0);
 
-    let start_range = Complex64::new(-1.0, -1.0);
-    let end_range = Complex64::new(1.0, 1.0);
-
-    let step = 0.08;
+    let step = 0.12;
 
     let re_range = start_range.re..end_range.re;
     let im_range = start_range.im..end_range.im;
@@ -36,12 +35,13 @@ fn calculate_points() -> impl Iterator<Item = (f32, f32)> {
         }
     });
 
-    let complex_plane = re_values.flat_map(move |re| {
-        im_values.clone().map(move |im| {
-            Complex64::new(re, im)
-            // (z.re as f32, z.im as f32, f(z).re as f32)
-        })
-    });
+    re_values.flat_map(move |re| im_values.clone().map(move |im| Complex64::new(re, im)))
+}
+
+fn calculate_points(
+    complex_plane: impl Iterator<Item = Complex64>,
+) -> impl Iterator<Item = (f32, f32)> {
+    let f = |z: Complex64| black_hole_transformation(z);
 
     complex_plane.map(f).map(|z| (z.re as f32, z.im as f32))
 }
@@ -52,14 +52,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root = SVGBackend::new(root_path, (1800, 1800)).into_drawing_area();
 
     let mut chart = ChartBuilder::on(&root)
-        .margin(5)
-        .build_cartesian_2d(-2f32..2f32, -2f32..2f32)?;
+        .margin(8)
+        .build_cartesian_2d(-20f32..20f32, -20f32..20f32)?;
 
-    // let f = |x| f32::abs(f32::sin(x * 10.0) * f32::cos(x * 20.0));
+    // let grid1 = generate_grid();
+    let grid2 = generate_grid();
+    let points = calculate_points(grid2);
 
-    let points = calculate_points();
+    // chart.draw_series(LineSeries::new(
+    //     grid1
+    //         .map(|z| {
+    //             let z1 = z * 2.0;
 
-    chart.draw_series(LineSeries::new(points, &GREEN))?;
+    //             (z1.re as f32, z1.im as f32)
+    //         })
+    //         .collect::<Vec<_>>(),
+    //     &GREEN,
+    // ))?;
+
+    chart.draw_series(LineSeries::new(points, &RED))?;
 
     root.present()?;
 
@@ -69,18 +80,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &roxmltree::Document::parse(String::from_utf8(svg_data).unwrap().as_str()).unwrap(),
         &svg2gcode::ConversionConfig {
             dpi: 100.0,
-            feedrate: 500.0,
+            feedrate: 600.0,
             origin: [Some(48.0), Some(36.0)],
-            tolerance: 0.005,
+            tolerance: 0.004,
         },
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 180.0,
+                    number: 185.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 180.0,
+                    number: 185.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
