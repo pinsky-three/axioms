@@ -1,17 +1,14 @@
-use axioms::black_hole_transformation;
+use axioms::inverse_transformation;
 use g_code::emit::{format_gcode_fmt, FormatOptions};
 use num::complex::Complex64;
 use plotters::prelude::*;
 use std::iter;
 
-fn generate_grid() -> impl Iterator<Item = Complex64> {
-    let start_range = Complex64::new(-20.0, -20.0);
-    let end_range = Complex64::new(20.0, 20.0);
+fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = Complex64> {
+    let step = 0.06;
 
-    let step = 0.12;
-
-    let re_range = start_range.re..end_range.re;
-    let im_range = start_range.im..end_range.im;
+    let re_range = start.re..end.re;
+    let im_range = start.im..end.im;
 
     let re_values = iter::successors(Some(re_range.start), move |x| {
         let step = step;
@@ -38,26 +35,35 @@ fn generate_grid() -> impl Iterator<Item = Complex64> {
     re_values.flat_map(move |re| im_values.clone().map(move |im| Complex64::new(re, im)))
 }
 
-fn calculate_points(
-    complex_plane: impl Iterator<Item = Complex64>,
-) -> impl Iterator<Item = (f32, f32)> {
-    let f = |z: Complex64| black_hole_transformation(z);
+// fn calculate_points(
+//     complex_plane: impl Iterator<Item = Complex64>,
+// ) -> impl Iterator<Item = (f32, f32)> {
 
-    complex_plane.map(f).map(|z| (z.re as f32, z.im as f32))
-}
+// }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root_path = "plot_example.svg";
 
     let root = SVGBackend::new(root_path, (1800, 1800)).into_drawing_area();
 
+    root.fill(&WHITE)?;
+
     let mut chart = ChartBuilder::on(&root)
-        .margin(8)
+        .margin(5)
         .build_cartesian_2d(-20f32..20f32, -20f32..20f32)?;
 
-    // let grid1 = generate_grid();
-    let grid2 = generate_grid();
-    let points = calculate_points(grid2);
+    // chart.configure_mesh().draw()?;
+
+    let start_range = Complex64::new(-2.0, -2.0);
+    let end_range = Complex64::new(2.0, 2.0);
+
+    // let grid1 = generate_grid(start_range, end_range);
+    let complex_plane = generate_grid(start_range, end_range);
+
+    let f = |z: Complex64| inverse_transformation(z);
+
+    // let original_points = grid1.map(|z| (z.re as f32, z.im as f32));
+    let points = complex_plane.map(f).map(|z| (z.re as f32, z.im as f32));
 
     // chart.draw_series(LineSeries::new(
     //     grid1
@@ -70,28 +76,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     &GREEN,
     // ))?;
 
-    chart.draw_series(LineSeries::new(points, &RED))?;
+    // root.titled("Mobius Transformation", ("sans-serif", 60))?;
+
+    chart.draw_series(LineSeries::new(points, &BLACK))?;
+
+    // chart.draw_series(PointSeries::of_element(
+    //     original_points,
+    //     2,
+    //     &BLACK,
+    //     &|c, s, st| EmptyElement::at(c) + Circle::new((0, 0), s, st.filled()),
+    // ))?;
+
+    // chart.draw_series(PointSeries::of_element(points, 2, &BLACK, &|c, s, st| {
+    //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
+    // }))?;
 
     root.present()?;
-
     let svg_data = std::fs::read(root_path)?;
 
     let program = svg2gcode::svg2program(
         &roxmltree::Document::parse(String::from_utf8(svg_data).unwrap().as_str()).unwrap(),
         &svg2gcode::ConversionConfig {
             dpi: 100.0,
-            feedrate: 600.0,
+            feedrate: 2000.0,
             origin: [Some(48.0), Some(36.0)],
             tolerance: 0.004,
         },
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 185.0,
+                    number: 170.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 185.0,
+                    number: 170.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
@@ -100,8 +118,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             svg2gcode::SupportedFunctionality {
                 ..Default::default()
             },
-            None,
-            None,
+            Some(g_code::parse::snippet_parser("G1 Z0").unwrap()),
+            Some(g_code::parse::snippet_parser("G1 Z3").unwrap()),
             Some(g_code::parse::snippet_parser("G28 G1 Z10 G1 X43 Y31 Z1 G1 Z0").unwrap()),
             Some(g_code::parse::snippet_parser("G1 Z30").unwrap()),
         ),

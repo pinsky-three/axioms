@@ -12,11 +12,15 @@ pub fn logarithmic_transformation(z: Complex<f64>) -> Complex<f64> {
 
 // Exponential transformation: exp(z)
 pub fn exponential_transformation(z: Complex<f64>) -> Complex<f64> {
-    (z * 2.0).exp()
+    (z * 1.0).exp()
 }
 
 // Inverse transformation: 1 / z
 pub fn inverse_transformation(z: Complex<f64>) -> Complex<f64> {
+    // if z == Complex::zero() {
+    //     return Complex::new(f64::INFINITY, f64::INFINITY);
+    // }
+
     Complex::new(1.0, 0.0) / z
 }
 
