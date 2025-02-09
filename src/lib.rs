@@ -2,7 +2,7 @@ use num::complex::{Complex, ComplexFloat};
 
 // Möbius transformation: (z + 1) / (z - 1)
 pub fn mobius_transformation(z: Complex<f64>) -> Complex<f64> {
-    (z + 0.5 * Complex::new(1.0, 0.0)) / (z - 0.23 * Complex::new(1.0, 0.0))
+    (z + 0.5 * Complex::new(1.0, 0.0)) / (z - 0.5 * Complex::new(1.0, 0.0))
 }
 
 // Logarithmic transformation: log(z)
@@ -21,12 +21,21 @@ pub fn inverse_transformation(z: Complex<f64>) -> Complex<f64> {
     //     return Complex::new(f64::INFINITY, f64::INFINITY);
     // }
 
-    Complex::new(1.0, 0.0) / z
+    Complex::new(1.0, 1.0) / z
 }
 
 pub fn black_hole_transformation(z: Complex<f64>) -> Complex<f64> {
-    let im = (-1.0 * z.im) - (z.re * z.abs());
-    let re = z.re - (z.im * z.abs());
+    let im = -z.im - (z.re * z.abs());
+    let re = z.re - (0.5 * z.im * z.abs());
 
     Complex::new(re, im)
+}
+
+pub fn parabolic_transformation(z: Complex<f64>) -> Complex<f64> {
+    // let re = z.re + z.im * z.im;
+    // let im = z.im;
+
+    // Complex::new(re, im)
+
+    z * z * z
 }
