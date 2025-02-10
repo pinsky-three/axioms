@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     // .set_all_tick_mark_size(1000000)
     //     .draw()?;
 
-    let square_sample_length = 2.0;
+    let square_sample_length = 1.2;
 
     let start_range = Complex64::new(-square_sample_length, -square_sample_length);
     let end_range = Complex64::new(square_sample_length, square_sample_length);
@@ -93,11 +93,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // root.titled("Mobius Transformation", ("sans-serif", 60))?;
 
-    // chart.draw_series(LineSeries::new(points, &GREEN))?;
+    chart.draw_series(LineSeries::new(points, &RED))?;
 
-    chart.draw_series(PointSeries::of_element(points, 1, &GREEN, &|c, s, st| {
-        EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
-    }))?;
+    // chart.draw_series(PointSeries::of_element(points, 1, &GREEN, &|c, s, st| {
+    //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
+    // }))?;
 
     // chart.draw_series(PointSeries::of_element(points, 2, &BLACK, &|c, s, st| {
     //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
