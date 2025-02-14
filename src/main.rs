@@ -1,11 +1,11 @@
-use axioms::mobius_transformation;
+use axioms::Transformations;
 use g_code::emit::{format_gcode_fmt, FormatOptions};
 use num::complex::Complex64;
 use plotters::prelude::*;
 use std::iter;
 
 fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = Complex64> {
-    let step = 0.1;
+    let step = 0.11;
 
     let re_range = start.re..end.re;
     let im_range = start.im..end.im;
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut chart = ChartBuilder::on(&root)
         .margin(5)
-        .build_cartesian_2d(-5f32..5f32, -5f32..5f32)?;
+        .build_cartesian_2d(-10f32..10f32, -10f32..10f32)?;
 
     // chart
     //     .configure_mesh()
@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     // .set_all_tick_mark_size(1000000)
     //     .draw()?;
 
-    let square_sample_length = 1.2;
+    let square_sample_length = 2.1;
 
     let start_range = Complex64::new(-square_sample_length, -square_sample_length);
     let end_range = Complex64::new(square_sample_length, square_sample_length);
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // let complex_plane = generate_grid(start_range, end_range);
 
-    let f = |z: Complex64| mobius_transformation(z);
+    let f = |z: Complex64| Transformations::black_hole_transformation(z);
     let transformed_grid = grid1.map(f);
 
     // let points = original_grid.zip(transformed_grid).map(|(z1, z2)| z1 - z2);
@@ -117,11 +117,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 165.0,
+                    number: 199.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 165.0,
+                    number: 199.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
