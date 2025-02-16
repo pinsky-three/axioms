@@ -1,4 +1,6 @@
-use axioms::Transformations;
+use axioms::{common, Transformations};
+use bevy::prelude::*;
+use bevy_svg::prelude::*;
 use g_code::emit::{format_gcode_fmt, FormatOptions};
 use num::complex::Complex64;
 use plotters::prelude::*;
@@ -110,6 +112,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     root.present()?;
     let svg_data = std::fs::read(root_path)?;
 
+    std::fs::write("assets/plot_example.svg", svg_data.clone())?;
+
     let program = svg2gcode::svg2program(
         &roxmltree::Document::parse(String::from_utf8(svg_data).unwrap().as_str()).unwrap(),
         &svg2gcode::ConversionConfig {
@@ -171,5 +175,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // std::fs::write("plot_example.gcode", program_data)?;
 
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "origin_check".to_string(),
+                resolution: (1200., 1200.).into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
+        .add_plugins((common::CommonPlugin, bevy_svg::prelude::SvgPlugin))
+        .add_systems(Startup, setup)
+        .run();
+
     Ok(())
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let svg = asset_server.load("plot_example.svg");
+
+    commands.spawn(Camera2d);
+    commands.spawn((Svg2d(svg), Origin::Center));
+    // commands.spawn((Svg2d(svg.clone()), Origin::Center));
+    // commands.spawn((Svg2d(svg), Origin::TopLeft, common::DontChange));
 }

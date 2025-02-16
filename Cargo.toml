@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bevy = "0.15.2"
+bevy_svg = "0.15.1"
 g-code = "0.5.1"
 num = "0.4.3"
 plotters = "0.3.7"
