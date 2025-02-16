@@ -40,10 +40,13 @@ impl Transformations {
 
         // Complex::new(re, im)
 
-        z * z * z
+        // 1.0 / z + 1.0 / z / z + 1.0 / z / z / z + ...
+        (2..7).fold(Complex::new(0.00, 0.00), |acc, term| {
+            acc + 1.0 / z.powi(term)
+        })
     }
 
     pub fn sin_transformation(z: Complex<f64>) -> Complex<f64> {
-        Complex::new(1.0, -1.0) * z.sin()
+        Complex::new(1.0, 0.0) * (z * Complex::new(2.0, 0.1)).sin()
     }
 }
