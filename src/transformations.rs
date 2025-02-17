@@ -34,14 +34,14 @@ impl Transformations {
         Complex::new(re, im)
     }
 
-    pub fn parabolic_transformation(z: Complex<f64>) -> Complex<f64> {
+    pub fn z_riemann_transformation(z: Complex<f64>) -> Complex<f64> {
         // let re = z.re + z.im * z.im;
         // let im = z.im;
 
         // Complex::new(re, im)
 
         // 1.0 / z + 1.0 / z / z + 1.0 / z / z / z + ...
-        (2..7).fold(Complex::new(0.00, 0.00), |acc, term| {
+        1.0 * (1..2).fold(Complex::new(0.00, 0.00), |acc, term| {
             acc + 1.0 / z.powi(term)
         })
     }
