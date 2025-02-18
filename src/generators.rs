@@ -126,11 +126,11 @@ pub fn generate_gcode(svg_data: Vec<u8>) -> Result<String, Box<dyn std::error::E
         svg2gcode::ConversionOptions {
             dimensions: [
                 Some(svgtypes::Length {
-                    number: 192.0,
+                    number: 199.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
                 Some(svgtypes::Length {
-                    number: 192.0,
+                    number: 199.0,
                     unit: svgtypes::LengthUnit::Mm,
                 }),
             ],
