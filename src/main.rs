@@ -2,9 +2,12 @@ use axioms::{
     common,
     generators::{generate_gcode, generate_graph},
 };
+
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_svg::prelude::*;
+// use evalexpr::{ContextWithMutableVariables, DefaultNumericTypes, HashMapContext};
+// use num::complex::Complex64;
 // use g_code::emit::{format_gcode_fmt, FormatOptions};
 // use num::complex::Complex64;
 // use plotters::prelude::*;
@@ -53,6 +56,31 @@ fn setup(mut commands: Commands) {
     // commands.spawn((Svg2d(svg), Origin::TopLeft, common::DontChange));
 }
 
+use pest::Parser;
+use pest_derive::Parser;
+
+#[derive(Parser)]
+#[grammar = "grammars/minimal_complex_math.pest"]
+struct MinimalComplexMathParser;
+
+#[derive(Debug)]
+pub enum Expr {
+    Integer(i32),
+    BinOp {
+        lhs: Box<Expr>,
+        op: Op,
+        rhs: Box<Expr>,
+    },
+}
+
+#[derive(Debug)]
+pub enum Op {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
 fn ui_example_system(
     mut contexts: EguiContexts,
     mut commands: Commands,
@@ -65,6 +93,25 @@ fn ui_example_system(
         ui.text_edit_singleline(&mut value);
         if ui.button("Click me").clicked() {
             println!("Button clicked: {}", value);
+
+            let func: &str = "-0.3z^2 + 1.2e^.4*pi*i";
+
+            let res = MinimalComplexMathParser::parse(Rule::expression, func).unwrap();
+
+            println!("{:?}", res);
+
+            // let mut context = HashMapContext::<DefaultNumericTypes>::new();
+
+            // context
+            //     .set_value("z".to_string(), evalexpr::Value::from_float(0.0))
+            //     .unwrap();
+
+            // context
+            //     .set_value("i".to_string(), evalexpr::Value::from("sqrt(-1)"))
+            //     .unwrap();
+
+            // let res = evalexpr::eval_with_context(func, &context).unwrap();
+            // println!("res: {}", res);
 
             let svg_data = generate_graph().unwrap();
             let _g_code = generate_gcode(svg_data).unwrap();

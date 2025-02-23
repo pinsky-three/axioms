@@ -1,0 +1,28 @@
+// Automatically skipped whitespace
+WHITESPACE = _{ " " | "\t" }
+COMMENT    = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
+
+// The top-level rule
+expression = { sum }
+
+// Sum: handles addition/subtraction between products.
+sum = { product ~ (("+" | "-") ~ product)* }
+
+// Product: supports both explicit multiplication ("*") and implicit multiplication
+// (juxtaposed factors are treated as multiplied).
+product = { power ~ (("*"? ~ power))* }
+
+// Power: right-associative exponentiation (e.g. z^2 or e^.4)
+power = { primary ~ ("^" ~ power)? }
+
+// Primary: a float, an integer, a variable, or a parenthesized subexpression.
+primary = { float | int | variable | "(" ~ expression ~ ")" }
+
+// Floating point numbers (f64). Matches either digits with a dot or a dot followed by digits.
+float = @{ "-"? ~ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ | "." ~ ASCII_DIGIT+) }
+
+// Integers (i64). (Note: an integer could be promoted to f64 if needed.)
+int = @{ "-"? ~ ASCII_DIGIT+ }
+
+// Variables: a letter or underscore followed by any alphanumeric/underscore characters.
+variable = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
