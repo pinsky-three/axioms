@@ -1,28 +1,27 @@
-// Automatically skipped whitespace
+// Skip whitespace and comments automatically
 WHITESPACE = _{ " " | "\t" }
 COMMENT    = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
 
-// The top-level rule
+// Top-level rule: an expression
 expression = { sum }
 
-// Sum: handles addition/subtraction between products.
+// Sum: handles addition and subtraction between terms.
 sum = { product ~ (("+" | "-") ~ product)* }
 
-// Product: supports both explicit multiplication ("*") and implicit multiplication
-// (juxtaposed factors are treated as multiplied).
+// Product: handles both explicit ("*") and implicit multiplication.
 product = { power ~ (("*"? ~ power))* }
 
-// Power: right-associative exponentiation (e.g. z^2 or e^.4)
+// Power: handles exponentiation (right-associative).
 power = { primary ~ ("^" ~ power)? }
 
-// Primary: a float, an integer, a variable, or a parenthesized subexpression.
+// Primary: a float, an integer, a variable, or a parenthesized expression.
 primary = { float | int | variable | "(" ~ expression ~ ")" }
 
-// Floating point numbers (f64). Matches either digits with a dot or a dot followed by digits.
+// Floating-point numbers (f64): either with digits before or after the decimal point.
 float = @{ "-"? ~ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ | "." ~ ASCII_DIGIT+) }
 
-// Integers (i64). (Note: an integer could be promoted to f64 if needed.)
+// Integers (i64): a sequence of digits, possibly prefixed with a minus.
 int = @{ "-"? ~ ASCII_DIGIT+ }
 
-// Variables: a letter or underscore followed by any alphanumeric/underscore characters.
+// Variables: start with a letter or underscore followed by alphanumerics or underscores.
 variable = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }

@@ -7,7 +7,7 @@ use axioms::{
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_svg::prelude::*;
-use pest::Parser;
+use pest::{iterators::Pair, Parser};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     App::new()
@@ -48,17 +48,43 @@ fn ui_example_system(
         if ui.button("Click me").clicked() {
             println!("Button clicked: {}", value);
 
-            let func: &str = "-0.3z^2 + 1.2e^.4*pi*i";
-
-            let res = MinimalComplexMathParser::parse(Rule::expression, func).unwrap();
-
-            println!("{:?}", res);
-
             let svg_data = generate_graph().unwrap();
             let _g_code = generate_gcode(svg_data).unwrap();
 
             let svg = asset_server.load("plot_example.svg");
+
+            _calculate_expr();
+
             commands.spawn((Svg2d(svg), Origin::Center));
         }
     });
+}
+
+fn walk_pairs(pair: Pair<Rule>, indent: usize) {
+    // Create an indent string for pretty printing.
+    let indent_str = "  ".repeat(indent);
+    println!(
+        "{}Rule: {:?} | Text: {:?}",
+        indent_str,
+        pair.as_rule(),
+        pair.as_str()
+    );
+
+    // Recursively process all inner pairs.
+    for inner_pair in pair.into_inner() {
+        walk_pairs(inner_pair, indent + 1);
+    }
+}
+
+fn _calculate_expr() {
+    let func: &str = "-0.3z^2 + 2e^(.4*pi*i)";
+
+    // Parse the input using the top-level rule 'expression'
+    let parse_result = MinimalComplexMathParser::parse(Rule::expression, func)
+        .unwrap_or_else(|e| panic!("Parsing error: {}", e));
+
+    // Walk over each pair in the parse result.
+    for pair in parse_result {
+        walk_pairs(pair, 0);
+    }
 }
