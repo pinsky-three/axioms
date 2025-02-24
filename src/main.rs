@@ -6,7 +6,10 @@ use axioms::{
     grammar::ComplexMath,
 };
 
-use bevy::{color::palettes::css::WHITE, prelude::*};
+use bevy::{
+    color::palettes::css::{BLACK, GRAY, WHITE},
+    prelude::*,
+};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_svg::prelude::*;
 use num::complex::Complex64;
@@ -104,13 +107,13 @@ fn ui_example_system(
 
             // println!("svg.view_box: {:?}", svg.view_box);
 
-            // let ent = commands.spawn((
-            //     Mesh2d(meshes.add(Rectangle::new(w, h))),
-            //     MeshMaterial2d(materials.add(Color::from(WHITE))),
-            //     Transform::default().with_translation(Vec3::from_array([0.0, 0.0, -1.0])),
-            // ));
+            let ent = commands.spawn((
+                Mesh2d(meshes.add(Rectangle::new(w, h))),
+                MeshMaterial2d(materials.add(Color::from(BLACK.with_alpha(0.2)))),
+                Transform::default().with_translation(Vec3::from_array([0.0, 0.0, -1.0])),
+            ));
 
-            // state.entities.push(ent.id());
+            state.entities.push(ent.id());
 
             let ent = commands.spawn((
                 Mesh2d(meshes.add(mesh)),
