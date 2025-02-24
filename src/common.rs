@@ -271,7 +271,7 @@ pub fn camera_zoom_system(
             };
 
             if let Some(mut projection) = projection {
-                projection.scale -= if projection.scale <= 1.0 {
+                projection.scale -= if projection.scale <= 2.0 {
                     amount * 0.001
                 } else {
                     amount
