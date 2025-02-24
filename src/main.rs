@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use axioms::{
     common,
@@ -8,7 +8,8 @@ use axioms::{
 
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use bevy_svg::prelude::*;
+use bevy_svg::prelude::{Origin, Svg, Svg2d};
+// use bevy_svg::prelude::*;
 use num::complex::Complex64;
 
 #[derive(Default, Resource)]
@@ -47,7 +48,8 @@ fn ui_example_system(
     mut contexts: EguiContexts,
     mut commands: Commands,
     mut state: ResMut<ToolKitState>,
-    asset_server: Res<AssetServer>,
+    mut svgs: ResMut<Assets<Svg>>,
+    // asset_server: Res<AssetServer>,
 ) {
     egui::Window::new("Tool Kit").show(contexts.ctx_mut(), |ui| {
         // let mut value: String = "-0.3z^2 + 2e^(.4*pi*i)".to_string();
@@ -76,9 +78,14 @@ fn ui_example_system(
                 },
             )
             .unwrap();
-            let _g_code = generate_gcode(svg_data).unwrap();
 
-            let svg = asset_server.load("plot_example.svg");
+            let _g_code = generate_gcode(svg_data.clone()).unwrap();
+
+            // let svg = asset_server.load("plot_example.svg");
+
+            let svg = Svg::from_bytes(&svg_data, "plot_example.svg", Some("")).unwrap();
+
+            let svg = svgs.add(svg.clone());
 
             commands.spawn((Svg2d(svg), Origin::Center));
         }

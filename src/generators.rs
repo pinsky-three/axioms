@@ -62,69 +62,18 @@ where
 
     let root = SVGBackend::new(root_path, (1800, 1800)).into_drawing_area();
 
-    // root.fill(&WHITE)?;
-
     let mut chart = ChartBuilder::on(&root)
         .margin(5)
         .build_cartesian_2d(x_spec, y_spec)?;
 
-    // chart
-    //     .configure_mesh()
-    //     // .disable_x_axis()
-    //     // .disable_y_axis()
-    //     .disable_x_mesh()
-    //     .disable_y_mesh()
-    //     // .set_all_tick_mark_size(1000000)
-    //     .draw()?;
-
-    // let square_sample_length = 0.8;
-
-    // let start_range: num::Complex<f64> =
-    //     Complex64::new(-square_sample_length, -square_sample_length);
-    // let end_range = Complex64::new(square_sample_length, square_sample_length);
-
-    // let original_grid = generate_grid(start_range, end_range);
     let grid1 = generate_grid(start_range, end_range);
-
-    // let complex_plane = generate_grid(start_range, end_range);
-
-    // let f = |z: Complex64| {
-    //     // Transformations::inverse_transformation(z)
-    //     Transformations::z_riemann_transformation(z)
-    // };
 
     let f = transformation;
 
     let transformed_grid = grid1.map(f);
-
-    // let points = original_grid.zip(transformed_grid).map(|(z1, z2)| z1 - z2);
     let points = transformed_grid.map(|z| (z.re as f32, z.im as f32));
 
-    // let original_points = grid1.map(|z| (z.re as f32, z.im as f32));
-    // let points = complex_plane.map(f).map(|z| (z.re as f32, z.im as f32));
-
-    // chart.draw_series(LineSeries::new(
-    //     grid1
-    //         .map(|z| {
-    //             let z1 = z * 2.0;
-
-    //             (z1.re as f32, z1.im as f32)
-    //         })
-    //         .collect::<Vec<_>>(),
-    //     &GREEN,
-    // ))?;
-
-    // root.titled("Mobius Transformation", ("sans-serif", 60))?;
-
     chart.draw_series(LineSeries::new(points, &RED))?;
-
-    // chart.draw_series(PointSeries::of_element(points, 1, &GREEN, &|c, s, st| {
-    //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
-    // }))?;
-
-    // chart.draw_series(PointSeries::of_element(points, 2, &BLACK, &|c, s, st| {
-    //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
-    // }))?;
 
     root.present()?;
     let svg_data = std::fs::read(root_path)?;
