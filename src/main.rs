@@ -7,7 +7,7 @@ use axioms::{
 };
 
 use bevy::{
-    color::palettes::css::{BLACK, GRAY, WHITE},
+    color::palettes::css::{BLACK, WHITE},
     prelude::*,
 };
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
