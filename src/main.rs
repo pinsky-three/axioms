@@ -1,13 +1,16 @@
+use std::collections::HashMap;
+
 use axioms::{
     common,
     generators::{generate_gcode, generate_graph},
-    grammar::{MinimalComplexMathParser, Rule},
+    grammar::ComplexMath,
 };
 
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_svg::prelude::*;
-use pest::{iterators::Pair, Parser};
+use num::{complex::Complex64, Zero};
+// use pest::{iterators::Pair, Parser};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     App::new()
@@ -41,10 +44,11 @@ fn ui_example_system(
     asset_server: Res<AssetServer>,
 ) {
     egui::Window::new("Hello").show(contexts.ctx_mut(), |ui| {
-        let mut value = "world".to_string();
+        let mut value = "-0.3z^2 + 2e^(.4*pi*i)".to_string();
 
-        ui.label("world");
+        ui.label("expression");
         ui.text_edit_singleline(&mut value);
+
         if ui.button("Click me").clicked() {
             println!("Button clicked: {}", value);
 
@@ -53,38 +57,17 @@ fn ui_example_system(
 
             let svg = asset_server.load("plot_example.svg");
 
-            _calculate_expr();
+            // calculate_expr(&value);
+            let mut ctx = HashMap::new();
+
+            ctx.insert("z", Complex64::zero());
+
+            ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
+            ctx.insert("i", Complex64::i());
+
+            ComplexMath::calculate_expr(&ctx, &value).unwrap();
 
             commands.spawn((Svg2d(svg), Origin::Center));
         }
     });
-}
-
-fn walk_pairs(pair: Pair<Rule>, indent: usize) {
-    // Create an indent string for pretty printing.
-    let indent_str = "  ".repeat(indent);
-    println!(
-        "{}Rule: {:?} | Text: {:?}",
-        indent_str,
-        pair.as_rule(),
-        pair.as_str()
-    );
-
-    // Recursively process all inner pairs.
-    for inner_pair in pair.into_inner() {
-        walk_pairs(inner_pair, indent + 1);
-    }
-}
-
-fn _calculate_expr() {
-    let func: &str = "-0.3z^2 + 2e^(.4*pi*i)";
-
-    // Parse the input using the top-level rule 'expression'
-    let parse_result = MinimalComplexMathParser::parse(Rule::expression, func)
-        .unwrap_or_else(|e| panic!("Parsing error: {}", e));
-
-    // Walk over each pair in the parse result.
-    for pair in parse_result {
-        walk_pairs(pair, 0);
-    }
 }
