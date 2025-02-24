@@ -57,16 +57,10 @@ fn eval_expr(
         }
         // Sum: product ( ( "+" | "-" ) ~ product )*
         Rule::sum => {
-            let mut inner_pairs = pair.into_inner();
-            let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-            while let Some(op_pair) = inner_pairs.next() {
-                let operator = op_pair.as_str();
-                let next_val = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-                result = match operator {
-                    "+" => result + next_val,
-                    "-" => result - next_val,
-                    _ => unreachable!(),
-                };
+            let inner: Vec<_> = pair.into_inner().collect();
+            let mut result = eval_expr(inner[0].clone(), ctx)?;
+            for prod in inner.into_iter().skip(1) {
+                result += eval_expr(prod, ctx)?;
             }
             Ok(result)
         }
