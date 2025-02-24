@@ -44,7 +44,7 @@ fn ui_example_system(
     asset_server: Res<AssetServer>,
 ) {
     egui::Window::new("Hello").show(contexts.ctx_mut(), |ui| {
-        let mut value = "-0.3z^2 + 2e^(.4*pi*i)".to_string();
+        let mut value: String = "-0.3z^2 + 2e^(.4*pi*i)".to_string();
 
         ui.label("expression");
         ui.text_edit_singleline(&mut value);
@@ -57,15 +57,16 @@ fn ui_example_system(
 
             let svg = asset_server.load("plot_example.svg");
 
-            // calculate_expr(&value);
+            let value: String = "-0.3z^2 + 2e^(.4*pi*i)".to_string();
             let mut ctx = HashMap::new();
 
             ctx.insert("z", Complex64::zero());
 
             ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
+            ctx.insert("e", Complex64::new(std::f64::consts::E, 0.0));
             ctx.insert("i", Complex64::i());
 
-            ComplexMath::calculate_expr(&ctx, &value).unwrap();
+            ComplexMath::dump_tree(&ctx, &value).unwrap();
 
             commands.spawn((Svg2d(svg), Origin::Center));
         }
