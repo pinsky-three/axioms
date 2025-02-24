@@ -55,28 +55,38 @@ fn eval_expr(
             let inner = pair.into_inner().next().unwrap();
             eval_expr(inner, ctx)
         }
-        // Sum: product+
+        // Sum: product ( ( "+" | "-" ) ~ product )*
         Rule::sum => {
-            let inner: Vec<_> = pair.into_inner().collect();
-            let mut result = eval_expr(inner[0].clone(), ctx)?;
-            for prod in inner.into_iter().skip(1) {
-                result += eval_expr(prod, ctx)?;
+            let mut inner_pairs = pair.into_inner();
+            let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
+            while let Some(op_pair) = inner_pairs.next() {
+                let operator = op_pair.as_str();
+                let next_val = eval_expr(inner_pairs.next().unwrap(), ctx)?;
+                result = match operator {
+                    "+" => result + next_val,
+                    "-" => result - next_val,
+                    _ => unreachable!(),
+                };
             }
             Ok(result)
         }
-        // Product: power ( (optional "*" ) power )*
+        // Product: power ( (optional "*" ) ~ power )*
         Rule::product => {
             let mut inner_pairs = pair.into_inner();
+
             // Evaluate the first factor (a power)
             let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
+
+            // Each subsequent repetition can be either:
+            //   (a) A direct `power` => implicit multiplication
+            //   (b) A "*" token => explicit multiplication, then another `power`
             while let Some(next_pair) = inner_pairs.next() {
                 if next_pair.as_rule() == Rule::power {
                     // Implicit multiplication
                     let val = eval_expr(next_pair, ctx)?;
                     result *= val;
                 } else {
-                    // If it's not a power, assume it's the "*" token.
-                    // Then we expect the next pair to be the actual power factor.
+                    // Assume it's the "*" token.
                     assert_eq!(next_pair.as_str(), "*", "Unexpected parse structure");
                     let power_pair = inner_pairs
                         .next()
@@ -85,9 +95,10 @@ fn eval_expr(
                     result *= val;
                 }
             }
+
             Ok(result)
         }
-        // Power: primary ("^" power)?
+        // Power: primary ("^" ~ power)?
         Rule::power => {
             let mut inner_pairs = pair.into_inner();
             let base = eval_expr(inner_pairs.next().unwrap(), ctx)?;
@@ -99,9 +110,21 @@ fn eval_expr(
                 Ok(base)
             }
         }
-        // Primary: either a float, int, variable or a parenthesized expression.
+        // Unary: handles a leading minus or just a primary.
+        Rule::unary => {
+            // Collect inner pairs. For the "-" ~ unary alternative there will be two children.
+            let children: Vec<_> = pair.into_inner().collect();
+            if children.len() == 1 {
+                // No unary operator, just evaluate primary.
+                eval_expr(children[0].clone(), ctx)
+            } else {
+                // First child is "-" and second child is the unary expression.
+                let val = eval_expr(children[1].clone(), ctx)?;
+                Ok(-val)
+            }
+        }
+        // Primary: a float, an integer, a variable or a parenthesized expression.
         Rule::primary => {
-            // When using parenthesis, the inner expression is wrapped inside primary.
             let mut inner = pair.into_inner();
             if let Some(first) = inner.next() {
                 eval_expr(first, ctx)

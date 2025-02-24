@@ -12,16 +12,19 @@ sum = { product ~ (("+" | "-") ~ product)* }
 product = { power ~ (("*"? ~ power))* }
 
 // Power: handles exponentiation (right-associative).
-power = { primary ~ ("^" ~ power)? }
+power = { unary ~ ("^" ~ power)? }
+
+// Unary: handles a prefix minus (applied repeatedly) or just a primary.
+unary = { "-" ~ unary | primary }
 
 // Primary: a float, an integer, a variable, or a parenthesized expression.
 primary = { float | int | variable | "(" ~ expression ~ ")" }
 
 // Floating-point numbers (f64): either with digits before or after the decimal point.
-float = @{ "-"? ~ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ | "." ~ ASCII_DIGIT+) }
+float = @{ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ | "." ~ ASCII_DIGIT+) }
 
-// Integers (i64): a sequence of digits, possibly prefixed with a minus.
-int = @{ "-"? ~ ASCII_DIGIT+ }
+// Integers (i64): a sequence of digits.
+int = @{ ASCII_DIGIT+ }
 
 // Variables: start with a letter or underscore followed by alphanumerics or underscores.
 variable = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
