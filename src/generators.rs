@@ -8,8 +8,12 @@ use plotters::{
 };
 use std::iter;
 
-pub fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = Complex64> {
-    let step = 0.12;
+pub fn generate_grid(
+    start: Complex64,
+    end: Complex64,
+    step: f64,
+) -> impl Iterator<Item = Complex64> {
+    // let step = 0.12;
 
     let re_range = start.re..end.re;
     let im_range = start.im..end.im;
@@ -42,8 +46,9 @@ pub fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = C
 pub fn generate_graph<'a, X, Y>(
     x_spec: X,
     y_spec: Y,
-    start_range: Complex<f64>,
-    end_range: Complex<f64>,
+    start_grid: Complex<f64>,
+    end_grid: Complex<f64>,
+    step_grid: f64,
     transformation: impl FnMut(Complex64) -> Complex64,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>>
 where
@@ -66,7 +71,7 @@ where
         .margin(5)
         .build_cartesian_2d(x_spec, y_spec)?;
 
-    let grid1 = generate_grid(start_range, end_range);
+    let grid1 = generate_grid(start_grid, end_grid, step_grid);
 
     let f = transformation;
 

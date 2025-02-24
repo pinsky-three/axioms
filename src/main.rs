@@ -17,6 +17,7 @@ struct ToolKitState {
     translation_x: f32,
     translation_y: f32,
     entities: Vec<Entity>,
+    grid_step: f64,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "origin_check".to_string(),
-                resolution: (1200., 1200.).into(),
+                resolution: (1800., 1200.).into(),
                 ..Default::default()
             }),
             ..Default::default()
@@ -39,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             translation_x: -830.0,
             translation_y: 1000.0,
             entities: Vec::new(),
+            grid_step: 0.12,
         })
         .add_systems(Startup, setup)
         .add_systems(Update, ui_example_system)
@@ -47,27 +49,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn setup(
-    mut commands: Commands,
-    // mut camera: Query<(Option<Mut<OrthographicProjection>>, Mut<Transform>), With<Camera>>,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-
-    // commands.spawn((
-    //     Mesh2d(meshes.add(Rectangle::default())),
-    //     MeshMaterial2d(materials.add(Color::from(PURPLE))),
-    //     Transform::default().with_scale(Vec3::splat(128.)),
-    // ));
 }
 
 fn ui_example_system(
     mut contexts: EguiContexts,
     mut commands: Commands,
     mut state: ResMut<ToolKitState>,
-    // mut svgs: ResMut<Assets<Svg>>,
-    // asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
@@ -77,6 +66,7 @@ fn ui_example_system(
 
         ui.add(egui::Slider::new(&mut state.translation_x, -1000.0..=1000.0).text("translation_x"));
         ui.add(egui::Slider::new(&mut state.translation_y, -1000.0..=1000.0).text("translation_y"));
+        ui.add(egui::Slider::new(&mut state.grid_step, 0.01..=1.0).text("grid_step"));
 
         if ui.button("Compute").clicked() {
             println!("Button clicked: {}", state.expression);
@@ -93,6 +83,7 @@ fn ui_example_system(
                 -2.0f32..2.0,
                 Complex64::new(-1.0, -1.0),
                 Complex64::new(1.0, 1.0),
+                state.grid_step,
                 |z| {
                     ctx.insert("z", z);
                     ComplexMath::calculate_expr(&ctx, value).unwrap()
