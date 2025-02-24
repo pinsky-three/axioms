@@ -55,31 +55,20 @@ fn eval_expr(
             let inner = pair.into_inner().next().unwrap();
             eval_expr(inner, ctx)
         }
-        // Sum: product ( ( "+" | "-" ) product )*
+        // Sum: product+
         Rule::sum => {
-            let mut inner_pairs = pair.into_inner();
-            let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-            while let Some(op_pair) = inner_pairs.next() {
-                let operator = op_pair.as_str();
-                let next_val = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-                result = match operator {
-                    "+" => result + next_val,
-                    "-" => result - next_val,
-                    _ => unreachable!(),
-                };
+            let inner: Vec<_> = pair.into_inner().collect();
+            let mut result = eval_expr(inner[0].clone(), ctx)?;
+            for prod in inner.into_iter().skip(1) {
+                result += eval_expr(prod, ctx)?;
             }
             Ok(result)
         }
         // Product: power ( (optional "*" ) power )*
         Rule::product => {
             let mut inner_pairs = pair.into_inner();
-
             // Evaluate the first factor (a power)
             let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-
-            // Each subsequent repetition can be either:
-            //   (a) A direct `power` => implicit multiplication
-            //   (b) A "*" token => explicit multiplication, then another `power`
             while let Some(next_pair) = inner_pairs.next() {
                 if next_pair.as_rule() == Rule::power {
                     // Implicit multiplication
@@ -96,7 +85,6 @@ fn eval_expr(
                     result *= val;
                 }
             }
-
             Ok(result)
         }
         // Power: primary ("^" power)?

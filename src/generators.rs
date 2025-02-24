@@ -1,13 +1,12 @@
-use num::complex::Complex64;
+use num::{complex::Complex64, Complex};
 use plotters::{
     chart::ChartBuilder,
+    coord::ranged1d::AsRangedCoord,
     prelude::{IntoDrawingArea, SVGBackend},
     series::LineSeries,
     style::RED,
 };
 use std::iter;
-
-use crate::transformations::Transformations;
 
 pub fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = Complex64> {
     let step = 0.12;
@@ -40,7 +39,25 @@ pub fn generate_grid(start: Complex64, end: Complex64) -> impl Iterator<Item = C
     re_values.flat_map(move |re| im_values.clone().map(move |im| Complex64::new(re, im)))
 }
 
-pub fn generate_graph() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn generate_graph<'a, X, Y>(
+    x_spec: X,
+    y_spec: Y,
+    start_range: Complex<f64>,
+    end_range: Complex<f64>,
+    transformation: impl FnMut(Complex64) -> Complex64,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>>
+where
+    X: AsRangedCoord + 'static,
+    Y: AsRangedCoord + 'static,
+    for<'b> &'b plotters::element::DynElement<'static, plotters::prelude::SVGBackend<'a>, (f32, f32)>:
+        plotters::element::PointCollection<
+            'b,
+            (
+                <X as plotters::coord::ranged1d::AsRangedCoord>::Value,
+                <Y as plotters::coord::ranged1d::AsRangedCoord>::Value,
+            ),
+        >,
+{
     let root_path = "plot_example.svg";
 
     let root = SVGBackend::new(root_path, (1800, 1800)).into_drawing_area();
@@ -49,7 +66,7 @@ pub fn generate_graph() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
 
     let mut chart = ChartBuilder::on(&root)
         .margin(5)
-        .build_cartesian_2d(-10f32..10f32, -10f32..10f32)?;
+        .build_cartesian_2d(x_spec, y_spec)?;
 
     // chart
     //     .configure_mesh()
@@ -60,20 +77,23 @@ pub fn generate_graph() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     //     // .set_all_tick_mark_size(1000000)
     //     .draw()?;
 
-    let square_sample_length = 0.8;
+    // let square_sample_length = 0.8;
 
-    let start_range = Complex64::new(-square_sample_length, -square_sample_length);
-    let end_range = Complex64::new(square_sample_length, square_sample_length);
+    // let start_range: num::Complex<f64> =
+    //     Complex64::new(-square_sample_length, -square_sample_length);
+    // let end_range = Complex64::new(square_sample_length, square_sample_length);
 
     // let original_grid = generate_grid(start_range, end_range);
     let grid1 = generate_grid(start_range, end_range);
 
     // let complex_plane = generate_grid(start_range, end_range);
 
-    let f = |z: Complex64| {
-        // Transformations::inverse_transformation(z)
-        Transformations::z_riemann_transformation(z)
-    };
+    // let f = |z: Complex64| {
+    //     // Transformations::inverse_transformation(z)
+    //     Transformations::z_riemann_transformation(z)
+    // };
+
+    let f = transformation;
 
     let transformed_grid = grid1.map(f);
 
