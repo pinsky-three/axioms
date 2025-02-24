@@ -269,13 +269,14 @@ pub fn camera_zoom_system(
                 MouseScrollUnit::Line => ev.y,
                 MouseScrollUnit::Pixel => ev.y,
             };
+
             if let Some(mut projection) = projection {
                 projection.scale -= if projection.scale <= 1.0 {
-                    amount * 0.01
+                    amount * 0.001
                 } else {
                     amount
                 };
-                projection.scale = projection.scale.clamp(0.01, 10.0);
+                projection.scale = projection.scale.clamp(0.001, 2.0);
             } else {
                 transform.translation.z -= amount;
             }
