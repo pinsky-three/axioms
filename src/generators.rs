@@ -4,7 +4,7 @@ use plotters::{
     coord::ranged1d::AsRangedCoord,
     prelude::{IntoDrawingArea, SVGBackend},
     series::LineSeries,
-    style::RED,
+    style::full_palette::RED_100,
 };
 use std::iter;
 
@@ -78,7 +78,7 @@ where
     let transformed_grid = grid1.map(f);
     let points = transformed_grid.map(|z| (z.re as f32, z.im as f32));
 
-    chart.draw_series(LineSeries::new(points, &RED))?;
+    chart.draw_series(LineSeries::new(points, &RED_100))?;
 
     root.present()?;
     let svg_data = std::fs::read(root_path)?;

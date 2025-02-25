@@ -105,8 +105,6 @@ fn ui_example_system(
 
             let (w, h) = (svg.size.x, svg.size.y);
 
-            // println!("svg.view_box: {:?}", svg.view_box);
-
             let ent = commands.spawn((
                 Mesh2d(meshes.add(Rectangle::new(w, h))),
                 MeshMaterial2d(materials.add(Color::from(BLACK.with_alpha(0.2)))),
@@ -117,7 +115,7 @@ fn ui_example_system(
 
             let ent = commands.spawn((
                 Mesh2d(meshes.add(mesh)),
-                MeshMaterial2d(materials.add(Color::from(WHITE))),
+                MeshMaterial2d(materials.add(Color::from(WHITE).with_alpha(0.1))),
                 Transform::default().with_translation(Vec3::from_array([-w / 2.0, h / 2.0, 0.0])),
             ));
 

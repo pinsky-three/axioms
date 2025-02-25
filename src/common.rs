@@ -1,4 +1,5 @@
-use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::input::gestures::PanGesture;
+use bevy::input::mouse::{MouseButtonInput, MouseMotion, MouseScrollUnit, MouseWheel};
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use bevy_svg::prelude::*;
@@ -285,21 +286,47 @@ pub fn camera_zoom_system(
 }
 
 pub fn camera_pan_system(
-    input: Res<ButtonInput<KeyCode>>,
+    // input: Res<Drag<KeyCode>>,
     mut camera: Query<Mut<Transform>, With<Camera>>,
+    mut evr_motion: EventReader<MouseMotion>,
+    buttons: Res<ButtonInput<MouseButton>>,
+    // mut evr_gesture_pan: EventReader<PanGesture>,
 ) {
     for mut transform in camera.iter_mut() {
-        if input.pressed(KeyCode::KeyW) {
-            transform.translation.y += 1.0;
+        // evr_gesture_pan.read().for_each(|ev| {
+
+        // });
+        if !buttons.pressed(MouseButton::Right) {
+            continue;
         }
-        if input.pressed(KeyCode::KeyS) {
-            transform.translation.y -= 1.0;
+
+        let mut total_motion: Vec2 = evr_motion.read().map(|ev| ev.delta).sum();
+
+        if total_motion == Vec2::ZERO {
+            continue;
         }
-        if input.pressed(KeyCode::KeyA) {
-            transform.translation.x -= 1.0;
-        }
-        if input.pressed(KeyCode::KeyD) {
-            transform.translation.x += 1.0;
-        }
+
+        total_motion.y = -total_motion.y;
+
+        println!(
+            "Mouse moved: X: {} px, Y: {} px",
+            total_motion.x, total_motion.y
+        );
+
+        transform.translation.x += total_motion.x;
+        transform.translation.y += total_motion.y;
+
+        // if input.pressed(KeyCode::KeyW) {
+        //     transform.translation.y += 1.0;
+        // }
+        // if input.pressed(KeyCode::KeyS) {
+        //     transform.translation.y -= 1.0;
+        // }
+        // if input.pressed(KeyCode::KeyA) {
+        //     transform.translation.x -= 1.0;
+        // }
+        // if input.pressed(KeyCode::KeyD) {
+        //     transform.translation.x += 1.0;
+        // }
     }
 }
