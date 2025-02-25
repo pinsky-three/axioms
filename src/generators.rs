@@ -13,8 +13,6 @@ pub fn generate_grid(
     end: Complex64,
     step: f64,
 ) -> impl Iterator<Item = Complex64> {
-    // let step = 0.12;
-
     let re_range = start.re..end.re;
     let im_range = start.im..end.im;
 

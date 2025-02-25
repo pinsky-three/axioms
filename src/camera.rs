@@ -2,7 +2,8 @@ use bevy::input::gestures::PinchGesture;
 use bevy::input::mouse::MouseWheel;
 
 use bevy::prelude::*;
-// use bevy::window::PrimaryWindow;
+
+// #[allow(clippy::type_complexity)]
 
 pub struct CommonPlugin;
 
