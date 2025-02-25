@@ -1,8 +1,8 @@
-use bevy::input::gestures::PanGesture;
-use bevy::input::mouse::{MouseButtonInput, MouseMotion, MouseScrollUnit, MouseWheel};
+use bevy::input::gestures::PinchGesture;
+use bevy::input::mouse::MouseWheel;
 
+use bevy::window::PrimaryWindow;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
-use bevy_svg::prelude::*;
 
 /// Provides some common functionallity for all examples.
 /// Like toggling visibility and through origin.
@@ -15,7 +15,7 @@ impl Plugin for CommonPlugin {
             .add_systems(
                 Update,
                 (
-                    keyboard_input_system,
+                    // keyboard_input_system,
                     // fps_text_update_system,
                     // origin_text_update_system,
                     camera_zoom_system,
@@ -60,49 +60,49 @@ pub struct DontChange;
 
 /// This system toggles SVG visibility when 'V' is pressed and toggles through
 /// origin when 'O' is pressed.
-fn keyboard_input_system(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut svg_query: Query<
-        (&mut Origin, &mut Visibility),
-        (Or<(With<Svg2d>, With<Svg3d>)>, Without<DontChange>),
-    >,
-    mut ui_query: Query<
-        &mut Visibility,
-        (
-            With<Text>,
-            Or<(With<FpsTextRoot>, With<OriginTextRoot>)>,
-            Without<Svg2d>,
-            Without<Svg3d>,
-        ),
-    >,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyV) {
-        for (_, mut visible) in svg_query.iter_mut() {
-            *visible = match *visible {
-                Visibility::Hidden => Visibility::Inherited,
-                Visibility::Visible | Visibility::Inherited => Visibility::Hidden,
-            };
-        }
-    } else if keyboard_input.just_pressed(KeyCode::KeyO) {
-        for (mut origin, _) in svg_query.iter_mut() {
-            *origin = match origin.as_ref() {
-                Origin::BottomLeft => Origin::BottomRight,
-                Origin::BottomRight => Origin::TopRight,
-                Origin::Center => Origin::BottomLeft,
-                Origin::TopLeft => Origin::Center,
-                Origin::TopRight => Origin::TopLeft,
-                Origin::Custom(coord) => Origin::Custom(*coord),
-            }
-        }
-    } else if keyboard_input.just_pressed(KeyCode::KeyF) {
-        for mut visible in &mut ui_query {
-            *visible = match *visible {
-                Visibility::Hidden => Visibility::Inherited,
-                Visibility::Visible | Visibility::Inherited => Visibility::Hidden,
-            };
-        }
-    }
-}
+// fn keyboard_input_system(
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+//     mut svg_query: Query<
+//         (&mut Origin, &mut Visibility),
+//         (Or<(With<Svg2d>, With<Svg3d>)>, Without<DontChange>),
+//     >,
+//     mut ui_query: Query<
+//         &mut Visibility,
+//         (
+//             With<Text>,
+//             Or<(With<FpsTextRoot>, With<OriginTextRoot>)>,
+//             Without<Svg2d>,
+//             Without<Svg3d>,
+//         ),
+//     >,
+// ) {
+//     if keyboard_input.just_pressed(KeyCode::KeyV) {
+//         for (_, mut visible) in svg_query.iter_mut() {
+//             *visible = match *visible {
+//                 Visibility::Hidden => Visibility::Inherited,
+//                 Visibility::Visible | Visibility::Inherited => Visibility::Hidden,
+//             };
+//         }
+//     } else if keyboard_input.just_pressed(KeyCode::KeyO) {
+//         for (mut origin, _) in svg_query.iter_mut() {
+//             *origin = match origin.as_ref() {
+//                 Origin::BottomLeft => Origin::BottomRight,
+//                 Origin::BottomRight => Origin::TopRight,
+//                 Origin::Center => Origin::BottomLeft,
+//                 Origin::TopLeft => Origin::Center,
+//                 Origin::TopRight => Origin::TopLeft,
+//                 Origin::Custom(coord) => Origin::Custom(*coord),
+//             }
+//         }
+//     } else if keyboard_input.just_pressed(KeyCode::KeyF) {
+//         for mut visible in &mut ui_query {
+//             *visible = match *visible {
+//                 Visibility::Hidden => Visibility::Inherited,
+//                 Visibility::Visible | Visibility::Inherited => Visibility::Hidden,
+//             };
+//         }
+//     }
+// }
 
 // #[derive(Component)]
 // struct FpsText;
@@ -116,8 +116,8 @@ fn keyboard_input_system(
 // #[derive(Component)]
 // struct FrameTimeText;
 
-#[derive(Component)]
-struct FpsTextRoot;
+// #[derive(Component)]
+// struct FpsTextRoot;
 
 // #[derive(Resource)]
 // struct FpsValues {
@@ -223,8 +223,8 @@ struct FpsTextRoot;
 // #[derive(Component)]
 // struct OriginText;
 
-#[derive(Component)]
-struct OriginTextRoot;
+// #[derive(Component)]
+// struct OriginTextRoot;
 
 // fn setup_origin_text(mut commands: Commands, asset_server: Res<AssetServer>) {
 //     let font_bold = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -261,52 +261,90 @@ struct OriginTextRoot;
 // }
 
 pub fn camera_zoom_system(
-    mut evr_scroll: EventReader<MouseWheel>,
+    // mut evr_scroll: EventReader<MouseWheel>,
     mut camera: Query<(Option<Mut<OrthographicProjection>>, Mut<Transform>), With<Camera>>,
+    mut evr_gesture_pinch: EventReader<PinchGesture>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
+    // mut evr_gesture_rotate: EventReader<RotationGesture>,
 ) {
-    for ev in evr_scroll.read() {
+    for ev in evr_gesture_pinch.read() {
+        // Positive numbers are zooming in
+        // Negative numbers are zooming out
+        // println!("Two-finger zoom by {}", ev.0);
+
+        let current_cursor_pos = q_windows.single().cursor_position().unwrap();
+
         for (projection, mut transform) in camera.iter_mut() {
-            let amount = match ev.unit {
-                MouseScrollUnit::Line => ev.y,
-                MouseScrollUnit::Pixel => ev.y,
-            };
+            // let amount = match ev.unit {
+            //     MouseScrollUnit::Line => ev.y,
+            //     MouseScrollUnit::Pixel => ev.y,
+            // };
+
+            let amount = ev.0;
 
             if let Some(mut projection) = projection {
-                projection.scale -= if projection.scale <= 2.0 {
-                    amount * 0.001
-                } else {
-                    amount
-                };
-                projection.scale = projection.scale.clamp(0.001, 2.0);
+                projection.scale -= amount;
+                projection.viewport_origin = Vec2::new(
+                    current_cursor_pos.x / q_windows.single().width(),
+                    current_cursor_pos.y / q_windows.single().height(),
+                );
+                projection.scale = projection.scale.clamp(0.001, 3.0);
             } else {
                 transform.translation.z -= amount;
             }
         }
     }
+    // for ev in evr_scroll.read() {
+
+    // }
 }
 
 pub fn camera_pan_system(
     // input: Res<Drag<KeyCode>>,
     mut camera: Query<Mut<Transform>, With<Camera>>,
-    mut evr_motion: EventReader<MouseMotion>,
-    buttons: Res<ButtonInput<MouseButton>>,
+    // mut evr_motion: EventReader<MouseMotion>,
+    // buttons: Res<ButtonInput<MouseButton>>,
     // mut evr_gesture_pan: EventReader<PanGesture>,
+    // mut evr_gesture_pan: EventReader<PanGesture>,
+    // mut evr_gesture_doubletap: EventReader<PanGesture>,
+    mut evr_scroll: EventReader<MouseWheel>,
 ) {
+    // for ev_pinch in evr_gesture_pinch.read() {
+    //     // Positive numbers are zooming in
+    //     // Negative numbers are zooming out
+    //     println!("Two-finger zoom by {}", ev_pinch.0);
+    // }
+    // for ev_rotate in evr_gesture_rotate.read() {
+    //     // Positive numbers are anticlockwise
+    //     // Negative numbers are clockwise
+    //     println!("Two-finger rotate by {}", ev_rotate.0);
+    // }
+    // for ev_pan in evr_gesture_pan.read() {
+    //     // Each event is a Vec2 giving you the X/Y pan amount
+    //     println!("Two-finger pan by X: {}, Y: {}", ev_pan.0.x, ev_pan.0.y);
+    // }
+    // for ev_doubletap in evr_gesture_doubletap.read() {
+    //     // This one has no data
+    //     println!("Double-Tap gesture!");
+    // }
+
     for mut transform in camera.iter_mut() {
         // evr_gesture_pan.read().for_each(|ev| {
 
         // });
-        if !buttons.pressed(MouseButton::Right) {
-            continue;
-        }
+        // if !buttons.pressed(MouseButton::Right) {
+        //     continue;
+        // }
 
-        let mut total_motion: Vec2 = evr_motion.read().map(|ev| ev.delta).sum();
+        let mut total_motion: Vec2 = evr_scroll.read().map(|ev| Vec2::new(ev.x, ev.y)).sum();
+
+        // println!("Total motion: {:?}", total_motion);
 
         if total_motion == Vec2::ZERO {
             continue;
         }
 
-        total_motion.y = -total_motion.y;
+        total_motion.x = -total_motion.x;
 
         println!(
             "Mouse moved: X: {} px, Y: {} px",
