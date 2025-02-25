@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axioms::{
-    common,
+    camera,
     generators::{generate_gcode, generate_graph},
     grammar::ComplexMath,
 };
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ..Default::default()
         }))
         .add_plugins((
-            common::CommonPlugin,
+            camera::CommonPlugin,
             bevy_svg::prelude::SvgPlugin,
             EguiPlugin,
         ))
