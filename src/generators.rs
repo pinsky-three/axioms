@@ -1,3 +1,4 @@
+use bevy_svg::prelude::Svg;
 use num::{complex::Complex64, Complex};
 use plotters::{
     chart::ChartBuilder,
@@ -87,13 +88,22 @@ where
 }
 
 pub fn generate_gcode(svg_data: Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
+    let svg = Svg::from_bytes(&svg_data.clone(), "", Some(""))?;
+
+    let (w, h) = (svg.size.x, svg.size.y);
+
+    println!("SVG size: {}x{}", w, h);
+
+    let origin: [Option<f64>; 2] = [Some((w as f64 / 2.0) + 48.0), Some((h as f64 / 2.0) + 36.0)];
+
     let program = svg2gcode::svg2program(
         &roxmltree::Document::parse(String::from_utf8(svg_data).unwrap().as_str()).unwrap(),
         &svg2gcode::ConversionConfig {
-            dpi: 100.0,
+            dpi: 200.0,
             feedrate: 2000.0,
-            origin: [Some(48.0), Some(36.0)],
             tolerance: 0.004,
+            origin,
+            // origin: [Some(48.0), Some(36.0)],
         },
         svg2gcode::ConversionOptions {
             dimensions: [

@@ -23,6 +23,7 @@ struct ToolKitState {
     grid_step: f64,
     path_color: Color32,
     background_color: Color32,
+    loaded_svg_pah: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -48,6 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             grid_step: 0.04,
             path_color: Color32::from_gray(128),
             background_color: Color32::from_gray(15),
+            ..Default::default()
         })
         .add_systems(Startup, setup)
         .add_systems(Update, ui_example_system)
@@ -78,91 +80,132 @@ fn ui_example_system(
         ui.add(egui::Slider::new(&mut state.abs_grid, 0.0..=10.0).text("grid"));
         ui.add(egui::Slider::new(&mut state.grid_step, 0.01..=1.0).text("grid_step"));
 
-        ui.color_edit_button_srgba(&mut state.path_color);
-        ui.color_edit_button_srgba(&mut state.background_color);
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+            ui.color_edit_button_srgba(&mut state.path_color);
+            ui.color_edit_button_srgba(&mut state.background_color);
+        });
 
-        if ui.button("Compute").clicked() {
-            println!("Button clicked: {}", state.expression);
+        ui.separator();
 
-            let value = state.expression.as_str();
-            let mut ctx = HashMap::new();
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+            if ui.button("Load SVG").clicked() {
+                if let Some(file) = tinyfiledialogs::open_file_dialog("Open", "password.txt", None)
+                {
+                    state.loaded_svg_pah = Some(file.clone());
+                    let svg_data = std::fs::read(file).unwrap();
 
-            ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
-            ctx.insert("e", Complex64::new(std::f64::consts::E, 0.0));
-            ctx.insert("i", Complex64::i());
+                    let _g_code = generate_gcode(svg_data.clone()).unwrap();
 
-            let abs_spec = state.abs_spec;
-            let abs_grid = state.abs_grid;
+                    let svg = Svg::from_bytes(&svg_data, "", Option::<&str>::None).unwrap();
 
-            let svg_data = generate_graph(
-                -abs_spec..abs_spec,
-                -abs_spec..abs_spec,
-                Complex64::new(-abs_grid, -abs_grid),
-                Complex64::new(abs_grid, abs_grid),
-                state.grid_step,
-                |z| {
-                    ctx.insert("z", z);
-                    ComplexMath::calculate_expr(&ctx, value).unwrap()
-                },
-            )
-            .unwrap();
+                    let mesh = svg.tessellate();
 
-            let _g_code = generate_gcode(svg_data.clone()).unwrap();
+                    let (w, h) = (svg.size.x, svg.size.y);
 
-            let svg = Svg::from_bytes(&svg_data, "plot_example.svg", Option::<&str>::None).unwrap();
+                    let ent = commands.spawn((
+                        Mesh2d(meshes.add(Rectangle::new(w, h))),
+                        MeshMaterial2d(materials.add(Color::srgba(
+                            state.background_color.r() as f32 / 255.,
+                            state.background_color.g() as f32 / 255.,
+                            state.background_color.b() as f32 / 255.,
+                            state.background_color.a() as f32 / 255.,
+                        ))),
+                        Transform::default().with_translation(Vec3::from_array([0.0, 0.0, -1.0])),
+                    ));
 
-            let mesh = svg.tessellate();
+                    state.entities.push(ent.id());
 
-            let (w, h) = (svg.size.x, svg.size.y);
+                    let ent = commands.spawn((
+                        Mesh2d(meshes.add(mesh)),
+                        MeshMaterial2d(materials.add(Color::srgba(
+                            state.path_color.r() as f32 / 255.,
+                            state.path_color.g() as f32 / 255.,
+                            state.path_color.b() as f32 / 255.,
+                            state.path_color.a() as f32 / 255.,
+                        ))),
+                        Transform::default().with_translation(Vec3::from_array([
+                            -w / 2.0,
+                            h / 2.0,
+                            0.0,
+                        ])),
+                    ));
 
-            let ent = commands.spawn((
-                Mesh2d(meshes.add(Rectangle::new(w, h))),
-                MeshMaterial2d(materials.add(Color::srgba(
-                    state.background_color.r() as f32 / 255.,
-                    state.background_color.g() as f32 / 255.,
-                    state.background_color.b() as f32 / 255.,
-                    state.background_color.a() as f32 / 255.,
-                ))),
-                Transform::default().with_translation(Vec3::from_array([0.0, 0.0, -1.0])),
-            ));
-
-            state.entities.push(ent.id());
-
-            let ent = commands.spawn((
-                Mesh2d(meshes.add(mesh)),
-                MeshMaterial2d(materials.add(Color::srgba(
-                    state.path_color.r() as f32 / 255.,
-                    state.path_color.g() as f32 / 255.,
-                    state.path_color.b() as f32 / 255.,
-                    state.path_color.a() as f32 / 255.,
-                ))),
-                Transform::default().with_translation(Vec3::from_array([-w / 2.0, h / 2.0, 0.0])),
-            ));
-
-            state.entities.push(ent.id());
-
-            // let transform =
-            //     Transform::default().with_translation(Vec3::from_array([-w / 2.0, -h / 2.0, 0.0]));
-
-            // let ent = commands.spawn((
-            //     Text::new("Move the light with WASD.\nThe camera will smoothly track the light."),
-            //     Node {
-            //         position_type: PositionType::Relative,
-            //         top: Val::Px(w / 2.0),
-            //         right: Val::Px(h / 2.0),
-            //         ..default()
-            //     },
-            // ));
-
-            // state.entities.push(ent.id());
-        }
-
-        if ui.button("Clear").clicked() {
-            for ent in state.entities.iter() {
-                commands.entity(*ent).despawn();
+                    state.entities.push(ent.id());
+                }
             }
 
-            state.entities.clear();
-        }
+            if ui.button("Compute").clicked() {
+                println!("Button clicked: {}", state.expression);
+
+                let value = state.expression.as_str();
+                let mut ctx = HashMap::new();
+
+                ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
+                ctx.insert("e", Complex64::new(std::f64::consts::E, 0.0));
+                ctx.insert("i", Complex64::i());
+
+                let abs_spec = state.abs_spec;
+                let abs_grid = state.abs_grid;
+
+                let svg_data = generate_graph(
+                    -abs_spec..abs_spec,
+                    -abs_spec..abs_spec,
+                    Complex64::new(-abs_grid, -abs_grid),
+                    Complex64::new(abs_grid, abs_grid),
+                    state.grid_step,
+                    |z| {
+                        ctx.insert("z", z);
+                        ComplexMath::calculate_expr(&ctx, value).unwrap()
+                    },
+                )
+                .unwrap();
+
+                let _g_code = generate_gcode(svg_data.clone()).unwrap();
+
+                let svg =
+                    Svg::from_bytes(&svg_data, "plot_example.svg", Option::<&str>::None).unwrap();
+
+                let mesh = svg.tessellate();
+
+                let (w, h) = (svg.size.x, svg.size.y);
+
+                let ent = commands.spawn((
+                    Mesh2d(meshes.add(Rectangle::new(w, h))),
+                    MeshMaterial2d(materials.add(Color::srgba(
+                        state.background_color.r() as f32 / 255.,
+                        state.background_color.g() as f32 / 255.,
+                        state.background_color.b() as f32 / 255.,
+                        state.background_color.a() as f32 / 255.,
+                    ))),
+                    Transform::default().with_translation(Vec3::from_array([0.0, 0.0, -1.0])),
+                ));
+
+                state.entities.push(ent.id());
+
+                let ent = commands.spawn((
+                    Mesh2d(meshes.add(mesh)),
+                    MeshMaterial2d(materials.add(Color::srgba(
+                        state.path_color.r() as f32 / 255.,
+                        state.path_color.g() as f32 / 255.,
+                        state.path_color.b() as f32 / 255.,
+                        state.path_color.a() as f32 / 255.,
+                    ))),
+                    Transform::default().with_translation(Vec3::from_array([
+                        -w / 2.0,
+                        h / 2.0,
+                        0.0,
+                    ])),
+                ));
+
+                state.entities.push(ent.id());
+            }
+            if ui.button("Clear").clicked() {
+                for ent in state.entities.iter() {
+                    commands.entity(*ent).despawn();
+                }
+
+                state.entities.clear();
+            }
+        });
     });
 }
