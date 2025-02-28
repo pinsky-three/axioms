@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 use axioms::{
     camera,
     generators::{generate_gcode, generate_graph},
-    grammar::ComplexMath,
+    grammar::{ComplexMath, ComplexMathContext},
 };
 
 use bevy::prelude::*;
@@ -138,11 +138,13 @@ fn ui_example_system(
                 println!("Button clicked: {}", state.expression);
 
                 let value = state.expression.as_str();
-                let mut ctx = HashMap::new();
+                // let mut ctx = HashMap::new();
 
-                ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
-                ctx.insert("e", Complex64::new(std::f64::consts::E, 0.0));
-                ctx.insert("i", Complex64::i());
+                let mut ctx = ComplexMathContext::new();
+
+                // ctx.insert("pi", Complex64::new(std::f64::consts::PI, 0.0));
+                // ctx.insert("e", Complex64::new(std::f64::consts::E, 0.0));
+                // ctx.insert("i", Complex64::i());
 
                 let abs_spec = state.abs_spec;
                 let abs_grid = state.abs_grid;
@@ -154,8 +156,8 @@ fn ui_example_system(
                     Complex64::new(abs_grid, abs_grid),
                     state.grid_step,
                     |z| {
-                        ctx.insert("z", z);
-                        ComplexMath::calculate_expr(&ctx, value).unwrap()
+                        ctx.set_var("z", z);
+                        ComplexMath::calculate_expr(&mut ctx, value).unwrap()
                     },
                 )
                 .unwrap();

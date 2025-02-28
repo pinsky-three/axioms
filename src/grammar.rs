@@ -1,4 +1,4 @@
-use num::Complex;
+use num_complex::Complex;
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 use std::collections::HashMap;
@@ -7,150 +7,217 @@ use std::collections::HashMap;
 #[grammar = "grammars/minimal_complex_math.pest"]
 pub struct MinimalComplexMathParser;
 
-// Context mapping variable names (e.g. "pi", "e", "z", "i") to their Complex<f64> values.
-pub type ComplexMathContext = HashMap<&'static str, Complex<f64>>;
-
 pub struct ComplexMath;
+// pub type ComplexMathContext = HashMap<&'static str, Complex<f64>>;
 
 impl ComplexMath {
     pub fn calculate_expr(
-        ctx: &ComplexMathContext,
+        ctx: &mut ComplexMathContext,
         expression: &str,
     ) -> Result<Complex<f64>, Box<dyn std::error::Error>> {
         // Parse the input expression using the top-level rule
         let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression)?;
         let pair = pairs.next().unwrap();
-        // Evaluate the expression recursively
-        let result = eval_expr(pair, ctx)?;
+
+        let expr = parse_expr(pair);
+
+        let result = eval_expr(&expr, ctx);
+
         Ok(result)
     }
-    pub fn dump_tree(
-        ctx: &ComplexMathContext,
-        value: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let parse_result = MinimalComplexMathParser::parse(Rule::expression, value)
-            .unwrap_or_else(|e| panic!("Parsing error: {}", e));
+    // fn dump_tree(
+    //     _ctx: &mut ComplexMathContext,
+    //     value: &str,
+    // ) -> Result<(), Box<dyn std::error::Error>> {
+    //     let parse_result = MinimalComplexMathParser::parse(Rule::expression, value)
+    //         .unwrap_or_else(|e| panic!("Parsing error: {}", e));
 
-        for top_pair in parse_result.clone() {
-            // Print the parse tree for debugging
-            walk_pairs(top_pair.clone(), 0);
+    //     for top_pair in parse_result.clone() {
+    //         // Print the parse tree for debugging
+    //         walk_pairs(top_pair.clone(), 0);
 
-            // Then evaluate
-            let computed = eval_expr(top_pair, ctx)?;
-            println!("Computed result = {:?}", computed);
-        }
+    //         // Then evaluate
+    //         // let computed = eval_expr(top_pair, ctx);
+    //         // println!("Computed result = {:?}", computed);
+    //     }
 
-        Ok(())
+    //     Ok(())
+    // }
+}
+
+/// Example AST for expressions
+#[derive(Clone)]
+pub enum Expr {
+    Number(f64),
+    Var(String),
+    BinaryOp(Box<Expr>, Op, Box<Expr>),
+    UnaryOp(Op, Box<Expr>),
+    FuncCall(String, Vec<Expr>),
+    FuncDef(String, Vec<String>, Box<Expr>),
+}
+
+// impl Expr {
+//     fn from(pair: Pair<'_, Rule>) -> Expr {
+//         match pair.as_rule() {
+//             Rule::expression => {
+
+//             }
+//         }
+//     }
+// }
+
+#[derive(Copy, Clone)]
+pub enum Op {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Pow, // binary ops
+    Pos,
+    Neg, // unary ops (Pos for +, Neg for -)
+}
+
+/// Context holding variables and functions
+pub struct ComplexMathContext {
+    vars: HashMap<String, Complex<f64>>,
+    // Note: we store the function body as a Box<Expr>
+    funcs: HashMap<String, (Vec<String>, Box<Expr>)>,
+}
+
+impl ComplexMathContext {
+    pub fn new() -> Self {
+        let mut ctx = ComplexMathContext {
+            vars: HashMap::new(),
+            funcs: HashMap::new(),
+        };
+        // Initialize common constants
+        ctx.vars
+            .insert("pi".to_string(), Complex::new(std::f64::consts::PI, 0.0));
+        ctx.vars
+            .insert("e".to_string(), Complex::new(std::f64::consts::E, 0.0));
+        ctx.vars.insert("i".to_string(), Complex::new(0.0, 1.0));
+        ctx
+    }
+    pub fn get_var(&self, name: &str) -> Option<Complex<f64>> {
+        self.vars.get(name).cloned()
+    }
+    pub fn set_var(&mut self, name: &str, value: Complex<f64>) {
+        self.vars.insert(name.to_string(), value);
+    }
+    // Change get_func to return the Boxed version.
+    pub fn get_func(&self, name: &str) -> Option<&(Vec<String>, Box<Expr>)> {
+        self.funcs.get(name)
+    }
+    pub fn set_func(&mut self, name: &str, params: Vec<String>, body: Box<Expr>) {
+        self.funcs.insert(name.to_string(), (params, body));
     }
 }
 
-/// Recursively evaluates a parsed expression returning a Complex<f64> result.
-fn eval_expr(
-    pair: Pair<Rule>,
-    ctx: &ComplexMathContext,
-) -> Result<Complex<f64>, Box<dyn std::error::Error>> {
-    match pair.as_rule() {
-        // The top-level expression simply contains a sum
-        Rule::expression => {
-            let inner = pair.into_inner().next().unwrap();
-            eval_expr(inner, ctx)
-        }
-        // Sum: product ( ( "+" | "-" ) ~ product )*
-        Rule::sum => {
-            let inner: Vec<_> = pair.into_inner().collect();
-            let mut result = eval_expr(inner[0].clone(), ctx)?;
-            for prod in inner.into_iter().skip(1) {
-                result += eval_expr(prod, ctx)?;
+impl Default for ComplexMathContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
+    match expr {
+        // Numeric literal -> convert to Complex (real part set, imag = 0)
+        Expr::Number(val) => Complex::new(*val, 0.0),
+
+        // Variable or constant -> look up in context
+        Expr::Var(name) => context.get_var(name).unwrap_or_else(|| {
+            panic!("Undefined variable: {}", name);
+        }),
+
+        // Binary operations: evaluate both sides, then apply
+        Expr::BinaryOp(lhs, op, rhs) => {
+            let left_val = eval_expr(lhs, context);
+            let right_val = eval_expr(rhs, context);
+            match op {
+                Op::Add => left_val + right_val,
+                Op::Sub => left_val - right_val,
+                Op::Mul => left_val * right_val,
+                Op::Div => left_val / right_val,
+                Op::Pow => {
+                    // Exponentiation: handle real vs complex exponent
+                    let base = left_val;
+                    let exp = right_val;
+
+                    if exp.im == 0.0 {
+                        // exponent is real
+                        if exp.re.fract() == 0.0 {
+                            base.powi(exp.re as i32)
+                        } else {
+                            base.powf(exp.re)
+                        }
+                    } else {
+                        base.powc(exp)
+                    }
+                }
+                _ => unreachable!(),
             }
-            Ok(result)
         }
-        // Product: power ( (optional "*" ) ~ power )*
-        Rule::product => {
-            let mut inner_pairs = pair.into_inner();
 
-            // Evaluate the first factor (a power)
-            let mut result = eval_expr(inner_pairs.next().unwrap(), ctx)?;
+        // Unary operations: evaluate inner expression then apply
+        Expr::UnaryOp(op, inner) => {
+            let val = eval_expr(inner, context);
+            match op {
+                Op::Pos => val,
+                Op::Neg => -val,
+                _ => unreachable!(),
+            }
+        }
 
-            // Each subsequent repetition can be either:
-            //   (a) A direct `power` => implicit multiplication
-            //   (b) A "*" token => explicit multiplication, then another `power`
-            while let Some(next_pair) = inner_pairs.next() {
-                if next_pair.as_rule() == Rule::power {
-                    // Implicit multiplication
-                    let val = eval_expr(next_pair, ctx)?;
-                    result *= val;
+        // Function call: evaluate arguments, substitute into function body
+        Expr::FuncCall(name, arg_exprs) => {
+            // Clone the function definition so we don't hold a borrow on context.
+            let (params, body) = context
+                .get_func(name)
+                .unwrap_or_else(|| panic!("Undefined function: {}", name))
+                .clone();
+            // Evaluate each argument using a for loop.
+            let mut arg_vals = Vec::new();
+            for arg in arg_exprs.iter() {
+                arg_vals.push(eval_expr(arg, context));
+            }
+            if arg_vals.len() != params.len() {
+                panic!(
+                    "Function {} expected {} arguments, got {}",
+                    name,
+                    params.len(),
+                    arg_vals.len()
+                );
+            }
+            // Save any existing values for these parameter names (to restore later)
+            let mut saved_vars: Vec<(String, Option<Complex<f64>>)> = Vec::new();
+            for (param, &value) in params.iter().zip(arg_vals.iter()) {
+                saved_vars.push((param.clone(), context.get_var(param)));
+                context.set_var(param, value);
+            }
+            // Evaluate the function body. Use body.as_ref() to get &Expr.
+            let result = eval_expr(body.as_ref(), context);
+            // Restore previous variable values (or remove the param from context)
+            for (param, old_val) in saved_vars {
+                if let Some(val) = old_val {
+                    context.set_var(&param, val);
                 } else {
-                    // Assume it's the "*" token.
-                    assert_eq!(next_pair.as_str(), "*", "Unexpected parse structure");
-                    let power_pair = inner_pairs
-                        .next()
-                        .expect("Expected a power after `*` but found nothing");
-                    let val = eval_expr(power_pair, ctx)?;
-                    result *= val;
+                    context.vars.remove(&param);
                 }
             }
+            result
+        }
 
-            Ok(result)
+        // Function definition: store in context and return 0 (or you could return the body eval)
+        Expr::FuncDef(name, params, body_expr) => {
+            // Now simply pass the boxed expression.
+            context.set_func(name, params.clone(), body_expr.clone());
+            Complex::new(0.0, 0.0)
         }
-        // Power: primary ("^" ~ power)?
-        Rule::power => {
-            let mut inner_pairs = pair.into_inner();
-            let base = eval_expr(inner_pairs.next().unwrap(), ctx)?;
-            if let Some(exp_pair) = inner_pairs.next() {
-                let exponent = eval_expr(exp_pair, ctx)?;
-                // Compute exponentiation using complex powc
-                Ok(base.powc(exponent))
-            } else {
-                Ok(base)
-            }
-        }
-        // Unary: handles a leading minus or just a primary.
-        Rule::unary => {
-            // Collect inner pairs. For the "-" ~ unary alternative there will be two children.
-            let children: Vec<_> = pair.into_inner().collect();
-            if children.len() == 1 {
-                // No unary operator, just evaluate primary.
-                eval_expr(children[0].clone(), ctx)
-            } else {
-                // First child is "-" and second child is the unary expression.
-                let val = eval_expr(children[1].clone(), ctx)?;
-                Ok(-val)
-            }
-        }
-        // Primary: a float, an integer, a variable or a parenthesized expression.
-        Rule::primary => {
-            let mut inner = pair.into_inner();
-            if let Some(first) = inner.next() {
-                eval_expr(first, ctx)
-            } else {
-                Err("Empty primary expression".into())
-            }
-        }
-        // Float: a decimal number parsed as f64.
-        Rule::float => {
-            let num_str = pair.as_str();
-            let value: f64 = num_str.parse()?;
-            Ok(Complex::new(value, 0.0))
-        }
-        // Int: an integer parsed as i64 and converted to f64.
-        Rule::int => {
-            let num_str = pair.as_str();
-            let value: i64 = num_str.parse()?;
-            Ok(Complex::new(value as f64, 0.0))
-        }
-        // Variable: look up the variable in the provided context.
-        Rule::variable => {
-            let var_name = pair.as_str();
-            ctx.get(var_name)
-                .copied()
-                .ok_or_else(|| format!("Undefined variable: {}", var_name).into())
-        }
-        _ => Err(format!("Unhandled rule: {:?}", pair.as_rule()).into()),
     }
 }
 
 // A helper function for debugging purposes: recursively prints the parse tree.
-fn walk_pairs(pair: Pair<Rule>, indent: usize) {
+pub fn walk_pairs(pair: Pair<Rule>, indent: usize) {
     let indent_str = "  ".repeat(indent);
     println!(
         "{}Rule: {:?} | Text: {:?}",
@@ -164,28 +231,130 @@ fn walk_pairs(pair: Pair<Rule>, indent: usize) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use num::Complex;
-    use std::f64::consts::PI;
+fn parse_expr(pair: Pair<Rule>) -> Expr {
+    match pair.as_rule() {
+        Rule::expression => {
+            // Assuming your top-level rule “expression” just delegates to sum.
+            let inner = pair.into_inner().next().unwrap();
+            parse_expr(inner)
+        }
+        Rule::sum => {
+            // Build a left-associative tree for additions/subtractions.
+            let mut inner = pair.into_inner();
+            let mut expr = parse_expr(inner.next().unwrap());
+            while let Some(op_pair) = inner.next() {
+                let op = match op_pair.as_str() {
+                    "+" => Op::Add,
+                    "-" => Op::Sub,
+                    _ => unreachable!(),
+                };
+                let right = parse_expr(inner.next().unwrap());
+                expr = Expr::BinaryOp(Box::new(expr), op, Box::new(right));
+            }
+            expr
+        }
+        Rule::product => {
+            let inner: Vec<_> = pair.into_inner().collect();
+            // The first element is always the first 'power'
+            let mut expr = parse_expr(inner[0].clone());
+            let mut i = 1;
+            while i < inner.len() {
+                // If the current element is an explicit multiplication operator:
+                let op = if inner[i].as_rule() == Rule::mul_op {
+                    let op = match inner[i].as_str() {
+                        "*" => Op::Mul,
+                        "/" => Op::Div,
+                        _ => unreachable!(),
+                    };
+                    i += 1;
+                    op
+                } else {
+                    // No operator means implicit multiplication
+                    Op::Mul
+                };
+                // Ensure there is a right-hand side factor
+                if i >= inner.len() {
+                    panic!("Expected a factor after an operator, but found nothing");
+                }
+                let right = parse_expr(inner[i].clone());
+                i += 1;
+                expr = Expr::BinaryOp(Box::new(expr), op, Box::new(right));
+            }
+            expr
+        }
 
-    #[test]
-    fn test_expression() {
-        // Define the context: set values for some common constants and variables.
-        let mut ctx: ComplexMathContext = HashMap::new();
-        ctx.insert("pi", Complex::new(PI, 0.0));
-        ctx.insert("e", Complex::new(std::f64::consts::E, 0.0));
-        // For example, let "z" and "i" be some predefined numbers (or i could be the imaginary unit).
-        ctx.insert("z", Complex::new(2.0, 0.0));
-        // Here we assume "i" represents the imaginary unit.
-        ctx.insert("i", Complex::new(0.0, 1.0));
-
-        // Test a couple of expressions.
-        let expr1 = "-0.3z^2 + 1.2e^(.4*pi*i)";
-        let result1 = ComplexMath::calculate_expr(&ctx, expr1).unwrap();
-        println!("Expression: {}\nResult: {:?}", expr1, result1);
-
-        // You can add more tests and assert on expected values.
+        Rule::power => {
+            // Right-associative exponentiation.
+            let mut inner = pair.into_inner();
+            let base = parse_expr(inner.next().unwrap());
+            if let Some(exp_pair) = inner.next() {
+                let exponent = parse_expr(exp_pair);
+                Expr::BinaryOp(Box::new(base), Op::Pow, Box::new(exponent))
+            } else {
+                base
+            }
+        }
+        Rule::unary => {
+            // If there is a leading "-" (or "+"), build a UnaryOp.
+            let mut inner = pair.into_inner();
+            let mut ops = Vec::new();
+            // Collect any unary operators.
+            while let Some(p) = inner.peek() {
+                match p.as_rule() {
+                    Rule::unary_op => {
+                        let op = match p.as_str() {
+                            "-" => Op::Neg,
+                            "+" => Op::Pos,
+                            _ => unreachable!(),
+                        };
+                        ops.push(op);
+                        inner.next(); // consume the op
+                    }
+                    _ => break,
+                }
+            }
+            let mut expr = parse_expr(inner.next().unwrap());
+            // Apply the collected unary operators in reverse order.
+            for op in ops.into_iter().rev() {
+                expr = Expr::UnaryOp(op, Box::new(expr));
+            }
+            expr
+        }
+        Rule::primary => {
+            // primary can be a number, a function call, a parenthesized expression, or an ident.
+            let inner = pair.into_inner().next().unwrap();
+            parse_expr(inner)
+        }
+        Rule::number => {
+            let value = pair.as_str().parse::<f64>().unwrap();
+            Expr::Number(value)
+        }
+        Rule::ident => Expr::Var(pair.as_str().to_string()),
+        Rule::function_call => {
+            let mut inner = pair.into_inner();
+            let func_name = inner.next().unwrap().as_str().to_string();
+            let args = if let Some(arg_list) = inner.next() {
+                arg_list.into_inner().map(parse_expr).collect()
+            } else {
+                vec![]
+            };
+            Expr::FuncCall(func_name, args)
+        }
+        // Extend to handle function definitions if your grammar produces them.
+        Rule::function_definition => {
+            let mut inner = pair.into_inner();
+            let name = inner.next().unwrap().as_str().to_string();
+            let params = if let Some(param_list) = inner.next() {
+                param_list
+                    .into_inner()
+                    .map(|p| p.as_str().to_string())
+                    .collect()
+            } else {
+                vec![]
+            };
+            let body = Box::new(parse_expr(inner.next().unwrap()));
+            Expr::FuncDef(name, params, body)
+        }
+        _ => unimplemented!("Not implemented for rule: {:?}", pair.as_rule()),
     }
 }
