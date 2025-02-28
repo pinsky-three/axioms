@@ -24,7 +24,7 @@ impl ComplexMath {
 }
 
 /// Example AST for expressions
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     Number(f64),
     Var(String),
@@ -34,7 +34,7 @@ pub enum Expr {
     FuncDef(String, Vec<String>, Box<Expr>),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Op {
     Add,
     Sub,
@@ -64,6 +64,12 @@ impl ComplexMathContext {
         ctx.vars
             .insert("e".to_string(), Complex::new(std::f64::consts::E, 0.0));
         ctx.vars.insert("i".to_string(), Complex::new(0.0, 1.0));
+
+        ctx.funcs.insert(
+            "sin".to_string(),
+            (vec!["x".to_string()], Box::new(Expr::Number(0.0))),
+        );
+
         ctx
     }
     pub fn get_var(&self, name: &str) -> Option<Complex<f64>> {
@@ -89,13 +95,23 @@ impl Default for ComplexMathContext {
 /// Evaluates the AST and returns a Complex<f64>
 fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
     match expr {
-        Expr::Number(val) => Complex::new(*val, 0.0),
-        Expr::Var(name) => context
-            .get_var(name)
-            .unwrap_or_else(|| panic!("Undefined variable: {}", name)),
+        Expr::Number(val) => {
+            println!("number {}", val);
+
+            Complex::new(*val, 0.0)
+        }
+        Expr::Var(name) => {
+            println!("var {}", name);
+            context
+                .get_var(name)
+                .unwrap_or_else(|| panic!("Undefined variable: {}", name))
+        }
         Expr::BinaryOp(lhs, op, rhs) => {
             let left_val = eval_expr(lhs, context);
             let right_val = eval_expr(rhs, context);
+
+            println!("binary op {:?} {:?} {:?}", left_val, op, right_val);
+
             match op {
                 Op::Add => left_val + right_val,
                 Op::Sub => left_val - right_val,
@@ -107,6 +123,9 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
         }
         Expr::UnaryOp(op, inner) => {
             let val = eval_expr(inner, context);
+
+            println!("unary op {:?} {:?}", op, val);
+
             match op {
                 Op::Pos => val,
                 Op::Neg => -val,
@@ -114,6 +133,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncCall(name, args) => {
+            println!("func call {} {:?}", name, args);
             // If a user-defined function exists, call it.
             if let Some((params, body)) = context.get_func(name) {
                 let (params, body) = (params.clone(), body.clone());
@@ -160,6 +180,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncDef(name, params, body_expr) => {
+            println!("func def {} {:?} {:?}", name, params, body_expr);
             context.set_func(name, params.clone(), body_expr.clone());
             Complex::new(0.0, 0.0)
         }
