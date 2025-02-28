@@ -2,10 +2,11 @@
 WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }
 
 // Basic tokens
-ident = @{ ASCII_ALPHA+ }
-// function or variable name (one or more letters)
-number = { ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
-// number   = @{ ASCII_DIGIT+ ( "." ~ ASCII_DIGIT+ )? }   // integer or decimal number
+ident  = @{ ASCII_ALPHA+ }
+number =  {
+    ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)?
+  | "." ~ ASCII_DIGIT+
+}
 
 // Entry rule for a full input (one or more statements, separated by semicolons)
 program = { statement ~ (";" ~ statement)* ~ ";"? }
@@ -28,7 +29,7 @@ add_op = { "+" | "-" }
 product = { power ~ ((mul_op ~ power) | power)* }
 mul_op  = { "*" | "/" }
 
-// Exponentiation (higher precedence than product)
+// Exponentiation (higher precedence than product, right-associative)
 power  = { unary ~ (exp_op ~ unary)* }
 exp_op = { "^" }
 
@@ -36,7 +37,7 @@ exp_op = { "^" }
 unary    = { unary_op* ~ primary }
 unary_op = { "+" | "-" }
 
-// Primary values: numbers, function calls, parenthesized expressions, or standalone identifiers
+// Primary values: numbers, function calls, parenthesized expressions, or identifiers
 primary = { number | function_call | "(" ~ expression ~ ")" | ident }
 
 // Function call: name(expr1, expr2, ...)
