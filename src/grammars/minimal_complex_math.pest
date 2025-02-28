@@ -2,10 +2,16 @@
 WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }
 
 // Basic tokens
-ident  = @{ ASCII_ALPHA+ }
-number =  {
+ident = @{ ASCII_ALPHA+ }
+
+number = {
     ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)?
   | "." ~ ASCII_DIGIT+
+}
+
+imag_literal = {
+    (ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)?)
+  | ("." ~ ASCII_DIGIT+) ~ "i"
 }
 
 // Entry rule for a full input (one or more statements, separated by semicolons)
@@ -38,7 +44,7 @@ unary    = { unary_op* ~ primary }
 unary_op = { "+" | "-" }
 
 // Primary values: numbers, function calls, parenthesized expressions, or identifiers
-primary = { number | function_call | "(" ~ expression ~ ")" | ident }
+primary = { number | imag_literal | function_call | "(" ~ expression ~ ")" | ident }
 
 // Function call: name(expr1, expr2, ...)
 function_call = { ident ~ "(" ~ (expression ~ ("," ~ expression)*)? ~ ")" }

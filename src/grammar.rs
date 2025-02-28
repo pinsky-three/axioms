@@ -18,6 +18,7 @@ impl ComplexMath {
         let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression)?;
         let pair = pairs.next().unwrap();
         let expr = parse_expr(pair);
+        println!("Parsed expression: {:?}", expr);
         let result = eval_expr(&expr, ctx);
         Ok(result)
     }
@@ -27,6 +28,7 @@ impl ComplexMath {
 #[derive(Clone, Debug)]
 pub enum Expr {
     Number(f64),
+    NumberImag(f64),
     Var(String),
     BinaryOp(Box<Expr>, Op, Box<Expr>),
     UnaryOp(Op, Box<Expr>),
@@ -96,12 +98,17 @@ impl Default for ComplexMathContext {
 fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
     match expr {
         Expr::Number(val) => {
-            println!("number {}", val);
+            // println!("number {}", val);
 
             Complex::new(*val, 0.0)
         }
+        Expr::NumberImag(val) => {
+            // println!("number imag {}", val);
+
+            Complex::new(0.0, *val)
+        }
         Expr::Var(name) => {
-            println!("var {}", name);
+            // println!("var {}", name);
             context
                 .get_var(name)
                 .unwrap_or_else(|| panic!("Undefined variable: {}", name))
@@ -110,7 +117,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             let left_val = eval_expr(lhs, context);
             let right_val = eval_expr(rhs, context);
 
-            println!("binary op {:?} {:?} {:?}", left_val, op, right_val);
+            // println!("binary op {:?} {:?} {:?}", left_val, op, right_val);
 
             match op {
                 Op::Add => left_val + right_val,
@@ -124,7 +131,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
         Expr::UnaryOp(op, inner) => {
             let val = eval_expr(inner, context);
 
-            println!("unary op {:?} {:?}", op, val);
+            // println!("unary op {:?} {:?}", op, val);
 
             match op {
                 Op::Pos => val,
@@ -133,7 +140,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncCall(name, args) => {
-            println!("func call {} {:?}", name, args);
+            // println!("func call {} {:?}", name, args);
             // If a user-defined function exists, call it.
             if let Some((params, body)) = context.get_func(name) {
                 let (params, body) = (params.clone(), body.clone());
@@ -180,7 +187,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncDef(name, params, body_expr) => {
-            println!("func def {} {:?} {:?}", name, params, body_expr);
+            // println!("func def {} {:?} {:?}", name, params, body_expr);
             context.set_func(name, params.clone(), body_expr.clone());
             Complex::new(0.0, 0.0)
         }
@@ -198,7 +205,7 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             let mut inner = pair.into_inner();
             let mut expr = parse_expr(inner.next().unwrap());
             while let Some(op_pair) = inner.next() {
-                let op = match op_pair.as_str() {
+                let op = match op_pair.as_str().trim() {
                     "+" => Op::Add,
                     "-" => Op::Sub,
                     _ => unreachable!(),
@@ -214,7 +221,7 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             let mut i = 1;
             while i < inner.len() {
                 let op = if inner[i].as_rule() == Rule::mul_op {
-                    let op = match inner[i].as_str() {
+                    let op = match inner[i].as_str().trim() {
                         "*" => Op::Mul,
                         "/" => Op::Div,
                         _ => unreachable!(),
@@ -265,7 +272,7 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             while let Some(p) = inner.peek() {
                 match p.as_rule() {
                     Rule::unary_op => {
-                        let op = match p.as_str() {
+                        let op = match p.as_str().trim() {
                             "-" => Op::Neg,
                             "+" => Op::Pos,
                             _ => unreachable!(),
@@ -287,10 +294,10 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             parse_expr(inner)
         }
         Rule::number => {
-            let value = pair.as_str().parse::<f64>().unwrap();
+            let value = pair.as_str().trim().parse::<f64>().unwrap();
             Expr::Number(value)
         }
-        Rule::ident => Expr::Var(pair.as_str().to_string()),
+        Rule::ident => Expr::Var(pair.as_str().trim().to_string()),
         Rule::function_call => {
             let mut inner = pair.into_inner();
             let func_name = inner.next().unwrap().as_str().to_string();
@@ -314,6 +321,12 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             };
             let body = Box::new(parse_expr(inner.next().unwrap()));
             Expr::FuncDef(name, params, body)
+        }
+        Rule::imag_literal => {
+            let s = pair.as_str().trim(); // e.g. "3i" or ".5i"
+            let numeric_part = &s[..s.len() - 1]; // strip trailing 'i'
+            let val = numeric_part.parse::<f64>().unwrap();
+            Expr::NumberImag(val) // or something representing 0 + val*i
         }
         _ => unimplemented!("Not implemented for rule: {:?}", pair.as_rule()),
     }
