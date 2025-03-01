@@ -15,10 +15,12 @@ impl ComplexMath {
         expression: &str,
     ) -> Result<Complex<f64>, Box<dyn std::error::Error>> {
         // Parse the input using the top-level rule (here: expression)
-        let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression)?;
+        let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression.trim())?;
         let pair = pairs.next().unwrap();
         let expr = parse_expr(pair);
-        println!("Parsed expression: {:?}", expr);
+
+        // println!("Parsed expression: {:?}", expr);
+
         let result = eval_expr(&expr, ctx);
         Ok(result)
     }
@@ -36,7 +38,7 @@ pub enum Expr {
     FuncDef(String, Vec<String>, Box<Expr>),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Op {
     Add,
     Sub,
@@ -97,27 +99,14 @@ impl Default for ComplexMathContext {
 /// Evaluates the AST and returns a Complex<f64>
 fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
     match expr {
-        Expr::Number(val) => {
-            // println!("number {}", val);
-
-            Complex::new(*val, 0.0)
-        }
-        Expr::NumberImag(val) => {
-            // println!("number imag {}", val);
-
-            Complex::new(0.0, *val)
-        }
-        Expr::Var(name) => {
-            // println!("var {}", name);
-            context
-                .get_var(name)
-                .unwrap_or_else(|| panic!("Undefined variable: {}", name))
-        }
+        Expr::Number(val) => Complex::new(*val, 0.0),
+        Expr::NumberImag(val) => Complex::new(0.0, *val),
+        Expr::Var(name) => context
+            .get_var(name)
+            .unwrap_or_else(|| panic!("Undefined variable: {}", name)),
         Expr::BinaryOp(lhs, op, rhs) => {
             let left_val = eval_expr(lhs, context);
             let right_val = eval_expr(rhs, context);
-
-            // println!("binary op {:?} {:?} {:?}", left_val, op, right_val);
 
             match op {
                 Op::Add => left_val + right_val,
@@ -131,8 +120,6 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
         Expr::UnaryOp(op, inner) => {
             let val = eval_expr(inner, context);
 
-            // println!("unary op {:?} {:?}", op, val);
-
             match op {
                 Op::Pos => val,
                 Op::Neg => -val,
@@ -140,7 +127,6 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncCall(name, args) => {
-            // println!("func call {} {:?}", name, args);
             // If a user-defined function exists, call it.
             if let Some((params, body)) = context.get_func(name) {
                 let (params, body) = (params.clone(), body.clone());
@@ -187,7 +173,6 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
             }
         }
         Expr::FuncDef(name, params, body_expr) => {
-            // println!("func def {} {:?} {:?}", name, params, body_expr);
             context.set_func(name, params.clone(), body_expr.clone());
             Complex::new(0.0, 0.0)
         }
@@ -196,14 +181,20 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
 
 /// Recursively converts a Pest parse tree into our AST.
 fn parse_expr(pair: Pair<Rule>) -> Expr {
+    // 2.2e*(-i*.2*z) + .4z^2
     match pair.as_rule() {
         Rule::expression => {
             let inner = pair.into_inner().next().unwrap();
+
+            // println!("Rule::expression {:?}", inner.as_rule());
+
             parse_expr(inner)
         }
         Rule::sum => {
             let mut inner = pair.into_inner();
             let mut expr = parse_expr(inner.next().unwrap());
+
+            // println!("Rule::sum: {:?} {:?}", inner, expr);
             while let Some(op_pair) = inner.next() {
                 let op = match op_pair.as_str().trim() {
                     "+" => Op::Add,
@@ -211,6 +202,7 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                     _ => unreachable!(),
                 };
                 let right = parse_expr(inner.next().unwrap());
+
                 expr = Expr::BinaryOp(Box::new(expr), op, Box::new(right));
             }
             expr
@@ -237,7 +229,14 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                 }
                 let right = parse_expr(inner[i].clone());
                 i += 1;
-                expr = Expr::BinaryOp(Box::new(expr), op, Box::new(right));
+
+                // println!("Rule::product: {:?} {:?} {:?}", expr, op, right);
+
+                if op == Op::Div && matches!(right, Expr::Number(0.0) | Expr::NumberImag(0.0)) {
+                    expr = Expr::Number(f64::INFINITY);
+                } else {
+                    expr = Expr::BinaryOp(Box::new(expr), op, Box::new(right));
+                }
             }
             expr
         }
@@ -257,6 +256,9 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                 let mut i = inner.len() - 2;
                 while i > 0 {
                     let left = parse_expr(inner[i - 1].clone());
+
+                    // println!("Rule::power: {:?} {:?} {:?}", left, Op::Pow, expr);
+
                     expr = Expr::BinaryOp(Box::new(left), Op::Pow, Box::new(expr));
                     if i < 2 {
                         break;
@@ -285,19 +287,30 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             }
             let mut expr = parse_expr(inner.next().unwrap());
             for op in ops.into_iter().rev() {
+                // println!("Rule::unary: {:?} {:?}", op, expr);
                 expr = Expr::UnaryOp(op, Box::new(expr));
             }
             expr
         }
         Rule::primary => {
             let inner = pair.into_inner().next().unwrap();
+
+            // println!("Rule::primary {:?}", inner.as_rule());
+
             parse_expr(inner)
         }
         Rule::number => {
             let value = pair.as_str().trim().parse::<f64>().unwrap();
+
+            // println!("Rule::number {:?}", value);
+
             Expr::Number(value)
         }
-        Rule::ident => Expr::Var(pair.as_str().trim().to_string()),
+        Rule::ident => {
+            // println!("Rule::ident {:?}", pair.as_str().trim());
+
+            Expr::Var(pair.as_str().trim().to_string())
+        }
         Rule::function_call => {
             let mut inner = pair.into_inner();
             let func_name = inner.next().unwrap().as_str().to_string();
@@ -306,6 +319,9 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             } else {
                 vec![]
             };
+
+            // println!("Rule::function_call: {:?} {:?}", func_name, args);
+
             Expr::FuncCall(func_name, args)
         }
         Rule::function_definition => {
@@ -320,12 +336,21 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                 vec![]
             };
             let body = Box::new(parse_expr(inner.next().unwrap()));
+
+            // println!(
+            //     "Rule::function_definition: {:?} {:?} {:?}",
+            //     name, params, body
+            // );
+
             Expr::FuncDef(name, params, body)
         }
         Rule::imag_literal => {
             let s = pair.as_str().trim(); // e.g. "3i" or ".5i"
             let numeric_part = &s[..s.len() - 1]; // strip trailing 'i'
             let val = numeric_part.parse::<f64>().unwrap();
+
+            // println!("Rule::imag_literal {:?}", val);
+
             Expr::NumberImag(val) // or something representing 0 + val*i
         }
         _ => unimplemented!("Not implemented for rule: {:?}", pair.as_rule()),

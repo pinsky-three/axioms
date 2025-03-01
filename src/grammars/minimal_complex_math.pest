@@ -41,7 +41,7 @@ exp_op = { "^" }
 
 // Unary plus/minus (highest operator precedence)
 unary    = { unary_op* ~ primary }
-unary_op = { "+" | "-" }
+unary_op = { "-" }
 
 // Primary values: numbers, function calls, parenthesized expressions, or identifiers
 primary = { number | imag_literal | function_call | "(" ~ expression ~ ")" | ident }
