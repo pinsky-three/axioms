@@ -9,7 +9,7 @@ number = {
 }
 
 imag_literal = {
-    (ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)?)
+    (ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)?) ~ "i"
   | ("." ~ ASCII_DIGIT+) ~ "i"
 }
 

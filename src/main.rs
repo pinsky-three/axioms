@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .add_systems(Update, ui_example_system)
     //     .run();
 
-    let expression = "1 + 1.2i";
+    let expression = "1.0 + 1.2i";
     let mut ctx = ComplexMathContext::new();
     ctx.set_var("z", Complex64::new(0.3, 0.2));
 
