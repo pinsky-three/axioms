@@ -1,7 +1,6 @@
-// Whitespace (spaces, tabs, newlines) is skipped between tokens
 WHITESPACE = _{ " " | "\t" | "\r\n" | "\n" }
+COMMENT    = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-// Basic tokens
 ident = @{ ASCII_ALPHA+ }
 
 number = {
@@ -14,37 +13,28 @@ imag_literal = {
   | ("." ~ ASCII_DIGIT+) ~ "i"
 }
 
-// Entry rule for a full input (one or more statements, separated by semicolons)
 program = { statement ~ (";" ~ statement)* ~ ";"? }
 
-// A statement can be either a function definition or an expression
 statement = { function_definition | expression }
 
-// Function definition: name(arg1, arg2, ...) = expression
 function_definition = { ident ~ "(" ~ parameter_list? ~ ")" ~ "=" ~ expression }
 parameter_list      = { ident ~ ("," ~ ident)* }
 
-// Expression parsing with operator precedence
-expression = { sum }
+expression = { sum | product | power | unary | primary }
 
-// Addition and subtraction (lowest precedence)
 sum    = { product ~ (add_op ~ product)* }
 add_op = { "+" | "-" }
 
-// Multiplication, division, and implicit multiplication (higher precedence than sum)
 product = { power ~ ((mul_op ~ power) | power)* }
 mul_op  = { "*" | "/" }
 
-// Exponentiation (higher precedence than product, right-associative)
 power  = { unary ~ (exp_op ~ unary)* }
 exp_op = { "^" }
 
-// Unary plus/minus (highest operator precedence)
-unary    = { unary_op* ~ primary }
-unary_op = { "-" }
+unary    = { unary_op ~ primary }
+unary_op = { "-" | "+" }
 
-// Primary values: numbers, function calls, parenthesized expressions, or identifiers
-primary = { number | imag_literal | function_call | "(" ~ expression ~ ")" | ident }
+primary = { imag_literal | number }
+// function_call | "(" ~ expression ~ ")" | ident
 
-// Function call: name(expr1, expr2, ...)
 function_call = { ident ~ "(" ~ (expression ~ ("," ~ expression)*)? ~ ")" }

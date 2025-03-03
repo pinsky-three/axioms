@@ -15,7 +15,9 @@ impl ComplexMath {
         expression: &str,
     ) -> Result<Complex<f64>, Box<dyn std::error::Error>> {
         // Parse the input using the top-level rule (here: expression)
-        let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression.trim())?;
+        let mut pairs = MinimalComplexMathParser::parse(Rule::expression, expression)?;
+        // println!("Pairs: {:?}", pairs);
+
         let pair = pairs.next().unwrap();
         let expr = parse_expr(pair);
 
@@ -98,6 +100,7 @@ impl Default for ComplexMathContext {
 
 /// Evaluates the AST and returns a Complex<f64>
 fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
+    println!("eval_expr: {:?}", expr);
     match expr {
         Expr::Number(val) => Complex::new(*val, 0.0),
         Expr::NumberImag(val) => Complex::new(0.0, *val),
@@ -182,6 +185,7 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
 /// Recursively converts a Pest parse tree into our AST.
 fn parse_expr(pair: Pair<Rule>) -> Expr {
     // 2.2e*(-i*.2*z) + .4z^2
+    println!("parse_expr: {:?}", pair);
     match pair.as_rule() {
         Rule::expression => {
             let inner = pair.into_inner().next().unwrap();
@@ -345,11 +349,8 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             Expr::FuncDef(name, params, body)
         }
         Rule::imag_literal => {
-            let s = pair.as_str().trim(); // e.g. "3i" or ".5i"
-            let numeric_part = &s[..s.len() - 1]; // strip trailing 'i'
-            let val = numeric_part.parse::<f64>().unwrap();
-
-            // println!("Rule::imag_literal {:?}", val);
+            let s: &str = pair.as_str().trim(); // e.g. "3i" or ".5i"
+            let val = s.parse::<f64>().unwrap();
 
             Expr::NumberImag(val) // or something representing 0 + val*i
         }
