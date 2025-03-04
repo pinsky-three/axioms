@@ -219,6 +219,7 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             let inner: Vec<_> = pair.into_inner().collect();
             let mut expr = parse_expr(inner[0].clone());
             let mut i = 1;
+
             while i < inner.len() {
                 let op = if inner[i].as_rule() == Rule::mul_op {
                     let op = match inner[i].as_str().trim() {
