@@ -27,41 +27,41 @@ struct ToolKitState {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // App::new()
-    //     .add_plugins(DefaultPlugins.set(WindowPlugin {
-    //         primary_window: Some(Window {
-    //             title: "Axioms".to_string(),
-    //             resolution: (1800., 1200.).into(),
-    //             ..Default::default()
-    //         }),
-    //         ..Default::default()
-    //     }))
-    //     .add_plugins((
-    //         camera::CommonPlugin,
-    //         bevy_svg::prelude::SvgPlugin,
-    //         EguiPlugin,
-    //     ))
-    //     .insert_resource(ToolKitState {
-    //         expression: "2.2e*(-i*.2*z) + .4z^2".to_string(),
-    //         abs_spec: 2.0,
-    //         abs_grid: 1.0,
-    //         entities: Vec::new(),
-    //         grid_step: 0.04,
-    //         path_color: Color32::from_gray(128),
-    //         background_color: Color32::from_gray(15),
-    //         ..Default::default()
-    //     })
-    //     .add_systems(Startup, setup)
-    //     .add_systems(Update, ui_example_system)
-    //     .run();
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Axioms".to_string(),
+                resolution: (1800., 1200.).into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
+        .add_plugins((
+            camera::CommonPlugin,
+            bevy_svg::prelude::SvgPlugin,
+            EguiPlugin,
+        ))
+        .insert_resource(ToolKitState {
+            expression: "2.2e*(-i*.2*z) + .4z^2".to_string(),
+            abs_spec: 2.0,
+            abs_grid: 1.0,
+            entities: Vec::new(),
+            grid_step: 0.04,
+            path_color: Color32::from_gray(128),
+            background_color: Color32::from_gray(15),
+            ..Default::default()
+        })
+        .add_systems(Startup, setup)
+        .add_systems(Update, ui_example_system)
+        .run();
 
-    let expression = "1.0 + 1.2i";
-    let mut ctx = ComplexMathContext::new();
-    ctx.set_var("z", Complex64::new(0.3, 0.2));
+    // let expression = "1.0 + 1.2i";
+    // let mut ctx = ComplexMathContext::new();
+    // ctx.set_var("z", Complex64::new(0.3, 0.2));
 
-    let res = ComplexMath::calculate_expr(&mut ctx, expression).unwrap();
+    // let res = ComplexMath::calculate_expr(&mut ctx, expression).unwrap();
 
-    println!("Result: {}", res);
+    // println!("Result: {}", res);
 
     Ok(())
 }

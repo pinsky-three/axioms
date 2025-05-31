@@ -216,6 +216,10 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             expr
         }
         Rule::product => {
+            let inner = pair.into_inner().next().unwrap();
+            parse_expr(inner)
+        }
+        Rule::implicit_mul => {
             let inner: Vec<_> = pair.into_inner().collect();
             let mut expr = parse_expr(inner[0].clone());
             let mut i = 1;
@@ -233,13 +237,12 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                     // Implicit multiplication
                     Op::Mul
                 };
+
                 if i >= inner.len() {
                     panic!("Expected a factor after an operator, but found nothing");
                 }
                 let right = parse_expr(inner[i].clone());
                 i += 1;
-
-                // println!("Rule::product: {:?} {:?} {:?}", expr, op, right);
 
                 if op == Op::Div && matches!(right, Expr::Number(0.0) | Expr::NumberImag(0.0)) {
                     expr = Expr::Number(f64::INFINITY);
@@ -303,23 +306,13 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
         }
         Rule::primary => {
             let inner = pair.into_inner().next().unwrap();
-
-            // println!("Rule::primary {:?}", inner.as_rule());
-
             parse_expr(inner)
         }
         Rule::number => {
             let value = pair.as_str().trim().parse::<f64>().unwrap();
-
-            // println!("Rule::number {:?}", value);
-
             Expr::Number(value)
         }
-        Rule::ident => {
-            // println!("Rule::ident {:?}", pair.as_str().trim());
-
-            Expr::Var(pair.as_str().trim().to_string())
-        }
+        Rule::ident => Expr::Var(pair.as_str().trim().to_string()),
         Rule::function_call => {
             let mut inner = pair.into_inner();
             let func_name = inner.next().unwrap().as_str().to_string();

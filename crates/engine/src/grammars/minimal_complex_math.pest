@@ -20,13 +20,14 @@ statement = { function_definition | expression }
 function_definition = { ident ~ "(" ~ parameter_list? ~ ")" ~ "=" ~ expression }
 parameter_list      = { ident ~ ("," ~ ident)* }
 
-expression = { sum | product | power | unary | primary }
+expression = { sum }
 
 sum    = { product ~ (add_op ~ product)* }
 add_op = { "+" | "-" }
 
-product = { power ~ ((mul_op ~ power) | power)* }
-mul_op  = { "*" | "/" }
+product      = { implicit_mul }
+implicit_mul = { power ~ (mul_op ~ power | &(ident | "(" | number | imag_literal) ~ power)* }
+mul_op       = { "*" | "/" }
 
 power  = { unary ~ (exp_op ~ unary)* }
 exp_op = { "^" }
@@ -34,7 +35,12 @@ exp_op = { "^" }
 unary    = { unary_op* ~ primary }
 unary_op = { "-" | "+" }
 
-primary = { imag_literal | number }
-// function_call | "(" ~ expression ~ ")" | ident
+primary = {
+    imag_literal
+  | number
+  | function_call
+  | "(" ~ expression ~ ")"
+  | ident
+}
 
 function_call = { ident ~ "(" ~ (expression ~ ("," ~ expression)*)? ~ ")" }
