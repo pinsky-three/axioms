@@ -100,7 +100,7 @@ impl Default for ComplexMathContext {
 
 /// Evaluates the AST and returns a Complex<f64>
 fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
-    println!("eval_expr: {:?}", expr);
+    // println!("eval_expr: {:?}", expr);
     match expr {
         Expr::Number(val) => Complex::new(*val, 0.0),
         Expr::NumberImag(val) => Complex::new(0.0, *val),
@@ -185,11 +185,11 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
 /// Recursively converts a Pest parse tree into our AST.
 fn parse_expr(pair: Pair<Rule>) -> Expr {
     // 2.2e*(-i*.2*z) + .4z^2
-    println!(
-        "parse_expr\t| rule: {:?}\t\t| span: {:?}",
-        pair.as_rule(),
-        pair.as_span().as_str()
-    );
+    // println!(
+    //     "parse_expr\t| rule: {:?}\t\t| span: {:?}",
+    //     pair.as_rule(),
+    //     pair.as_span().as_str()
+    // );
     match pair.as_rule() {
         Rule::expression => {
             let inner = pair.into_inner().next().unwrap();
