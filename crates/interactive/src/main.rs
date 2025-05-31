@@ -17,10 +17,11 @@ impl Default for HelloWorldSketch {
 
 impl App for HelloWorldSketch {
     fn update(&mut self, sketch: &mut Sketch, _ctx: &mut Context) -> anyhow::Result<()> {
-        sketch.color(Color::GREEN).stroke_width(1.0);
+        sketch.color(Color::RED).stroke_width(1.0);
 
         sketch
             .translate(sketch.width() / 2.0, sketch.height() / 2.0)
+            // .svg_path()
             .polyline(
                 vec![
                     (0.0, 0.0),
@@ -38,6 +39,6 @@ impl App for HelloWorldSketch {
 
 fn main() -> Result {
     HelloWorldSketch::runner()
-        .with_page_size_options(PageSize::A5H)
+        .with_page_size_options(PageSize::A4H)
         .run()
 }
