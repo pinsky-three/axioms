@@ -3,6 +3,8 @@ use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
 use std::collections::HashMap;
 
+use crate::transformations::Transformations;
+
 #[derive(Parser)]
 #[grammar = "grammars/minimal_complex_math.pest"]
 pub struct MinimalComplexMathParser;
@@ -171,6 +173,15 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
                     "tan" => arg_val.tan(),
                     "exp" => arg_val.exp(),
                     "log" => arg_val.ln(),
+                    "conj" => arg_val.conj(),
+                    "abs" => Complex::new(arg_val.norm(), 0.0),
+                    "fn" => {
+                        Transformations::black_hole_transformation(arg_val)
+
+                        // let mut ctx = ComplexMathContext::new();
+                        // let result = eval_expr(body_expr, &mut ctx);
+                        // result
+                    }
                     _ => panic!("Unknown function: {}", name),
                 }
             }
