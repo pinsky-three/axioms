@@ -8,50 +8,45 @@
   footer-descent: -20pt,
   footer: [
     #rect(
-      stroke: 0pt,
+      stroke: none,
       inset: 0pt,
       stack(
         dir: ltr,
         spacing: 1fr,
-        tiaoma.qrcode("https://pinsky.studio/p/685464e5-9d0f-4004-b3c7-a8f40c0f5962"),
+        tiaoma.qrcode("https://pinsky.studio/p/fe5bb12f-29de-426a-ab42-6f6ec7ca8174"),
         align(text(datetime.today().display(), size: 14pt, weight: 600), bottom)
       )
     )
   ]
 )
 
-// #text("Conformal Twist Mapping 1", size: 18pt, weight: 800)
+= * $= "Conformal_Twist_Mapping"(3)$ *
 
-= * $= "Conformal_Twist_Mapping"(1)$ *
-
-
-= Ficha Técnica
+= Ficha técnica
 
 - *Año de producción*: 2025
-- *Técnica*: Dibujo generativo trazado por plotter sobre papel de alta calidad de 290g, tinta pigmentada de archivo.
-- *Dimensiones*:  50 × 50 cm
+- *Técnica*: Dibujo generativo trazado en papel de alta calidad de 290g, tinta pigmentada de archivo
+- *Dimensiones*: 50 × 50 cm
 
+= Texto curatorial
 
-= Guíon Curatorial  
+Esta obra explora la aparición de simetrías de orden superior a partir de un conjunto mínimo de reglas matemáticas. La imagen, un patrón clásico de tetralóbulo (cuatro hojas), se genera mediante un mapeo conforme no iterativo que transforma todo el plano complejo.
 
-A primera vista la pieza parece un simple encuadre de segmentos blancos paralelos. Sin embargo, esos trazos materializan una transformación compleja rigurosa:
+La función se basa en un único polo, que luego se eleva a una potencia para crear los lóbulos simétricos. La transformación se define como:
 
 $
-f(z)=[(x - r y) + (-y - r x)i] dot e^(-pi/7 i),
-r = sqrt(x^2 + y^2),
-z = x + y i
-// \qquad r=\sqrt{x^{2}+y^{2}},\ z=x+yi.
+f(z) = 1/( z + 0.1) dot e^(pi i)
 $
 
-El mapa combina tres operaciones canónicas:
+La obra se define por dos principios fundamentales:
 
-1. *Cizalla radial* $(x,y) mapsto (x-r y, -y -r x)$ acopla cada coordenada cartesiana con el radio $r$, curvando la retícula recta en una torsión continua.
-2. *Conformalidad* la función preserva los ángulos locales, característica definitoria de los mapeos conformes.  
-3. *Rotación rígida* el factor $e^(- pi/7 i )$ gira la imagen exactamente $-pi/7$ radianes.
+1. *El Polo Fundacional*
+  La transformación está definida fundamentalmente por un único polo en $z = -0.1$. Esta singularidad actúa como un centro gravitacional que deforma el tejido del plano complejo. Toda la estructura visual —la curvatura de líneas rectas en arcos elegantes— se origina a partir de la influencia de este único punto fundacional.
 
-Al trazar un haz de líneas equidistantes y aplicar $f$ , emergen las curvas que distorsionan sutilmente el cuadrado interno. La tensión visual entre el marco inmutable y la malla deformada subraya un tema central de mi práctica: *deformación continua sin ruptura* donde reglas matemáticas mínimas reconfiguran la percepción respetando la estructura subyacente.
+2. *Rotación Rígida*
+  La multiplicación por $e^(pi i)$ (que equivale a $-1$) aplica una rotación rígida de 180 grados a todo el campo invertido. Este paso final reorienta la estructura en el plano pero preserva su geometría interna, completando la transformación de una cuadrícula simple a la forma final y elegante.
 
-La obra se inscribe en la tradición del arte algorítmico y generativo, donde el código es simultáneamente medio y metodología. Conceptualmente prolonga mis investigaciones sobre topologías conformes, transformando un mapeo abstracto en un objeto tangible dibujado por plotter. Cada línea es registro, prueba y vestigio de la lógica funcional.
-
+  
+La pieza es un estudio sobre la emergencia estructural. Demuestra cómo un elemento simple —un único polo— puede ser modificado por una operación sencilla —la exponenciación— para producir una forma de belleza intrincada e inesperada, tendiendo un puente entre la fórmula abstracta y el artefacto físico.
 
 #bibliography("references.bib", full: true, title: "Bibliografía")

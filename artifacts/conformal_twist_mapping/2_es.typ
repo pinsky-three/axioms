@@ -50,4 +50,4 @@ La obra se define por dos principios fundamentales:
 
 La obra es una exploración de cómo reglas simples y deterministas pueden generar una profunda complejidad estructural. Captura la influencia invisible de un único punto en el plano complejo, representándolo como un sereno patrón de tinta sobre papel, donde cada línea sirve como testamento de la lógica matemática subyacente.
 
-#bibliography("references.bib", full: true)
+#bibliography("references.bib", full: true, title: "Bibliografía")
