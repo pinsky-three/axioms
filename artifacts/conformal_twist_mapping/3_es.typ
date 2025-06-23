@@ -28,7 +28,7 @@
 = Ficha Técnica
 
 - *Año de producción*: 2025
-- *Técnica*: Dibujo generativo trazado por plotter sobre papel fino de 290g, tinta pigmentada de archivo.
+- *Técnica*: Dibujo generativo trazado por plotter sobre papel de alta calidad de 290g, tinta pigmentada de archivo.
 - *Dimensiones*:  50 × 50 cm
 
 

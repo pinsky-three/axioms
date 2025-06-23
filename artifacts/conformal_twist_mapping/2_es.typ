@@ -2,56 +2,52 @@
 
 #set page(
   paper: "a4",
+  // El archivo del logo no fue proporcionado, por lo que el encabezado está comentado.
   header: [
     #align(image("pinsky_logo_black.svg", width: 50pt), right)
   ],
   footer-descent: -20pt,
   footer: [
     #rect(
-      stroke: 0pt,
+      stroke: none,
       inset: 0pt,
       stack(
         dir: ltr,
         spacing: 1fr,
-        tiaoma.qrcode("https://pinsky.studio/p/685464e5-9d0f-4004-b3c7-a8f40c0f5962"),
+        // Código QR apuntando a una URL de marcador de posición para esta pieza.
+        tiaoma.qrcode("https://pinsky.studio/p/121608e8-3418-4a95-8b02-cba2a6d7602c"),
         align(text(datetime.today().display(), size: 14pt, weight: 600), bottom)
       )
     )
   ]
 )
 
-// #text("Conformal Twist Mapping 1", size: 18pt, weight: 800)
+= * $= "Conformal_Twist_Mapping"(2)$ *
 
-= * $= "Conformal_Twist_Mapping"(1)$ *
-
-
-= Ficha Técnica
+= Ficha técnica
 
 - *Año de producción*: 2025
-- *Técnica*: Dibujo generativo trazado por plotter sobre papel fino de 290g, tinta pigmentada de archivo.
-- *Dimensiones*:  50 × 50 cm
+- *Técnica*: Dibujo generativo trazado en papel de alta calidad de 290g, tinta pigmentada de archivo
+- *Dimensiones*: 50 × 50 cm
 
+= Texto curatorial
 
-= Guíon Curatorial  
+Esta pieza traduce un concepto fundamental del análisis complejo en un artefacto tangible y trazado. La imagen, que recuerda a un campo dipolar magnético, se genera al mapear una cuadrícula simple de líneas a través de una función compleja, revelando una estructura elegante y emergente.
 
-A primera vista la pieza parece un simple encuadre de segmentos blancos paralelos. Sin embargo, esos trazos materializan una transformación compleja rigurosa:
+La transformación está gobernada por la función $f(z)$, que describe un campo con un único polo, o singularidad:
 
 $
-f(z)=[(x - r y) + (-y - r x)i] dot e^(-pi/7 i),
-r = sqrt(x^2 + y^2),
-z = x + y i
-// \qquad r=\sqrt{x^{2}+y^{2}},\ z=x+yi.
+f(z) = 1 / (z + c), quad c = 0.01 + 0.01i
 $
 
-El mapa combina tres operaciones canónicas:
+La obra se define por dos principios fundamentales:
 
-1. *Cizalla radial* $(x,y) mapsto (x-r y, -y -r x)$ acopla cada coordenada cartesiana con el radio $r$, curvando la retícula recta en una torsión continua.
-2. *Conformalidad* la función preserva los ángulos locales, característica definitoria de los mapeos conformes.  
-3. *Rotación rígida* el factor $e^(- pi/7 i )$ gira la imagen exactamente $-pi/7$ radianes.
+1. *El Polo y la Singularidad*
+   La función posee un único polo en $z = -c$. Este punto, donde la función tiende a infinito, actúa como el centro desde el cual emana toda la estructura del campo, dictando el flujo y la curvatura de cada línea.
 
-Al trazar un haz de líneas equidistantes y aplicar $f$ , emergen las curvas que distorsionan sutilmente el cuadrado interno. La tensión visual entre el marco inmutable y la malla deformada subraya un tema central de mi práctica: *deformación continua sin ruptura* donde reglas matemáticas mínimas reconfiguran la percepción respetando la estructura subyacente.
+2. *Mapeo Conforme*
+   Como función analítica, $f(z)$ es conforme en todo su dominio excepto en su polo. Esta propiedad asegura que los ángulos entre las líneas que se intersectan se preserven desde la cuadrícula original hasta el dibujo final, lo que resulta en las elegantes curvas ortogonales que definen la textura de la obra.
 
-La obra se inscribe en la tradición del arte algorítmico y generativo, donde el código es simultáneamente medio y metodología. Conceptualmente prolonga mis investigaciones sobre topologías conformes, transformando un mapeo abstracto en un objeto tangible dibujado por plotter. Cada línea es registro, prueba y vestigio de la lógica funcional.
+La obra es una exploración de cómo reglas simples y deterministas pueden generar una profunda complejidad estructural. Captura la influencia invisible de un único punto en el plano complejo, representándolo como un sereno patrón de tinta sobre papel, donde cada línea sirve como testamento de la lógica matemática subyacente.
 
-
-#bibliography("references.bib", full: true, title: "Bibliografía")
+#bibliography("references.bib", full: true)
