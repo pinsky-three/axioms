@@ -32,7 +32,7 @@
 - *Dimensiones*:  50 × 50 cm
 
 
-= Guíon Curatorial  
+= Texto curatorial
 
 A primera vista la pieza parece un simple encuadre de segmentos blancos paralelos. Sin embargo, esos trazos materializan una transformación compleja rigurosa:
 
