@@ -176,7 +176,8 @@ fn eval_expr(expr: &Expr, context: &mut ComplexMathContext) -> Complex<f64> {
                     "conj" => arg_val.conj(),
                     "abs" => Complex::new(arg_val.norm(), 0.0),
                     "fn" => {
-                        Transformations::black_hole_transformation(arg_val)
+                        // Transformations::black_hole_transformation(arg_val)
+                        Transformations::mobius_transformation(arg_val)
 
                         // let mut ctx = ComplexMathContext::new();
                         // let result = eval_expr(body_expr, &mut ctx);

@@ -2,10 +2,8 @@ use bevy_svg::prelude::Svg;
 use num::{complex::Complex64, Complex};
 use plotters::{
     chart::ChartBuilder,
-    coord::ranged1d::AsRangedCoord,
-    prelude::{IntoDrawingArea, SVGBackend},
-    series::LineSeries,
-    style::full_palette::RED_100,
+    prelude::{Circle, IntoDrawingArea, SVGBackend},
+    style::{full_palette::RED_100, ShapeStyle},
 };
 use std::iter;
 
@@ -42,26 +40,14 @@ pub fn generate_grid(
     re_values.flat_map(move |re| im_values.clone().map(move |im| Complex64::new(re, im)))
 }
 
-pub fn generate_graph<'a, X, Y>(
-    x_spec: X,
-    y_spec: Y,
+pub fn generate_graph(
+    x_spec: std::ops::Range<f32>,
+    y_spec: std::ops::Range<f32>,
     start_grid: Complex<f64>,
     end_grid: Complex<f64>,
     step_grid: f64,
     transformation: impl FnMut(Complex64) -> Complex64,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>>
-where
-    X: AsRangedCoord + 'static,
-    Y: AsRangedCoord + 'static,
-    for<'b> &'b plotters::element::DynElement<'static, plotters::prelude::SVGBackend<'a>, (f32, f32)>:
-        plotters::element::PointCollection<
-            'b,
-            (
-                <X as plotters::coord::ranged1d::AsRangedCoord>::Value,
-                <Y as plotters::coord::ranged1d::AsRangedCoord>::Value,
-            ),
-        >,
-{
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let root_path = "plot_example.svg";
 
     let root = SVGBackend::new(root_path, (1800, 1800)).into_drawing_area();
@@ -76,8 +62,17 @@ where
 
     let transformed_grid = grid1.map(f);
     let points = transformed_grid.map(|z| (z.re as f32, z.im as f32));
+    // chart.draw_series(PointSeries::new(points, 1, &RED_100))?;
+    // chart.draw_series(PointSeries::of_element(points, 1, &RED_100, &|c, s, st| {
+    //     EmptyElement::at(c) + plotters::element::Circle::new((0, 0), s, st.filled())
+    // }))?;
+    // chart.draw_series(PointSeries::of_element(points, 1, &RED_100, &|c, s, st| {
+    //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
+    // }))?;
 
-    chart.draw_series(LineSeries::new(points, &RED_100))?;
+    chart.draw_series(
+        points.map(|coord| Circle::new(coord, 1, ShapeStyle::from(&RED_100).filled())),
+    )?;
 
     root.present()?;
     let svg_data = std::fs::read(root_path)?;

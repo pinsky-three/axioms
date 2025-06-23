@@ -5,7 +5,7 @@ pub struct Transformations;
 impl Transformations {
     // Möbius transformation: (z + 1) / (z - 1)
     pub fn mobius_transformation(z: Complex<f64>) -> Complex<f64> {
-        (z + 0.5 * Complex::new(1.0, 0.0)) / (z - 0.5 * Complex::new(1.0, 0.0))
+        (z + Complex::new(1.0, 0.0)) / (z - Complex::new(1.0, 0.0))
     }
 
     // Logarithmic transformation: log(z)
