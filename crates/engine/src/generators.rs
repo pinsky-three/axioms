@@ -2,8 +2,9 @@ use bevy_svg::prelude::Svg;
 use num::{complex::Complex64, Complex};
 use plotters::{
     chart::ChartBuilder,
-    prelude::{Circle, IntoDrawingArea, SVGBackend},
-    style::{full_palette::RED_100, ShapeStyle},
+    prelude::{IntoDrawingArea, SVGBackend},
+    series::LineSeries,
+    style::full_palette::WHITE,
 };
 use std::iter;
 
@@ -70,9 +71,11 @@ pub fn generate_graph(
     //     EmptyElement::at(c) + Circle::new((0, 0), s, st.filled())
     // }))?;
 
-    chart.draw_series(
-        points.map(|coord| Circle::new(coord, 1, ShapeStyle::from(&RED_100).filled())),
-    )?;
+    // chart.draw_series(
+    //     points.map(|coord| Circle::new(coord, 1, ShapeStyle::from(&RED_100).filled())),
+    // )?;
+
+    chart.draw_series(LineSeries::new(points, &WHITE))?;
 
     root.present()?;
     let svg_data = std::fs::read(root_path)?;
